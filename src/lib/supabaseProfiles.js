@@ -21,11 +21,17 @@ export const profileAPI = {
         .from('profiles')
         .select('*')
         .eq('id', userId)
-        .single();
+        .maybeSingle();
 
-      if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
+      if (error) {
+        // PGRST116 = no rows returned (not an error, just empty result)
+        if (error.code === 'PGRST116') {
+          return { data: null, error: null };
+        }
+        
+        // All other errors (including 406) are real errors
         console.error('Error fetching profile:', error);
-        return { data: null, error: error.message };
+        return { data: null, error: error.message || 'Failed to fetch profile' };
       }
 
       return { data: data || null, error: null };

@@ -25,7 +25,7 @@ export const useProfileStore = create(
         
         if (error) {
           set({ error, isLoading: false });
-          return;
+          throw new Error(error.message || error);
         }
         
         if (!profile) {
@@ -50,6 +50,7 @@ export const useProfileStore = create(
           error: 'Failed to load profile', 
           isLoading: false 
         });
+        throw err;
       }
     },
     

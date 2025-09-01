@@ -134,3 +134,6 @@ ___
   *5. Design/Branding Guidelines
 ```We cn use Tailwindcss green-500 and red-500 for success and error states. We will want to use Framer Motion opacity-translate techniques on most elements. The typography can remain primary for now, and we are focused on a mobile-first build. We will not be concerned with desktop layout until out user login flow is functional.
  
+
+ ___
+

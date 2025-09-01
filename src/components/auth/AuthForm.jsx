@@ -43,7 +43,7 @@ export default function AuthForm({ mode, setMode, onClose }) {
 
     return (
         <form onSubmit={handleSubmit} className="space-y-4">
-            <h2 className="text-xl font-semibold">
+            <h2 className="text-xl text-black text-left font-semibold">
                 {mode === "signin" && "Sign In"}
                 {mode === "signup" && "Create Account"}
                 {mode === "forgot" && "Reset Password"}

@@ -3,11 +3,12 @@ import { motion } from "framer-motion";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCommentsQuestion } from "@fortawesome/pro-duotone-svg-icons";
 
-function About() {
+function About({ isDark }) {
     const [message, setMessage] = useState("About...");
 
     return (
         <motion.div
+            className={`${isDark ? 'bg-[var(--color-black)]' : 'bg-[var(--color-white)]'}`}
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.3 }}

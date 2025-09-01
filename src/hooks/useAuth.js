@@ -140,37 +140,22 @@ export const useAuth = () => {
     let mounted = true;
 
     const initializeAuth = async () => {
-      console.log('Chrome Debug: Starting auth initialization');
-      
       try {
         const { data: { session } } = await supabase.auth.getSession();
-        console.log('Chrome Debug: Session data:', session);
         
         if (mounted && session?.user) {
-          console.log('Chrome Debug: Found session, initializing profile with timeout');
-          
-          // Add 5-second timeout for profile initialization
-          const timeoutPromise = new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Profile initialization timeout')), 5000)
-          );
-          
           try {
-            await Promise.race([
-              initializeProfile(session.user.id),
-              timeoutPromise
-            ]);
-            console.log('Chrome Debug: Profile initialization successful');
+            await initializeProfile(session.user.id);
           } catch (profileError) {
-            console.error('Chrome Debug: Profile init failed:', profileError);
-            // Still set initialized to true to show UI
+            console.error('Profile initialization failed:', profileError);
+            // Still set initialized to show UI
             useProfileStore.setState({ isInitialized: true });
           }
         } else if (mounted) {
-          console.log('Chrome Debug: No session, setting isInitialized = true');
           useProfileStore.setState({ isInitialized: true });
         }
       } catch (error) {
-        console.error('Chrome Debug: Auth initialization failed:', error);
+        console.error('Auth initialization failed:', error);
         // Fallback: still show UI
         if (mounted) {
           useProfileStore.setState({ isInitialized: true });
@@ -182,12 +167,16 @@ export const useAuth = () => {
       async (event, session) => {
         if (!mounted) return;
 
-        // console.log('Auth state changed:', event, session?.user?.email);
-
         switch (event) {
           case 'SIGNED_IN':
             if (session?.user) {
-              await initializeProfile(session.user.id);
+              try {
+                await initializeProfile(session.user.id);
+              } catch (profileError) {
+                console.error('Profile initialization failed on sign in:', profileError);
+                // Still set initialized to show UI
+                useProfileStore.setState({ isInitialized: true });
+              }
             }
             break;
           
@@ -196,9 +185,11 @@ export const useAuth = () => {
             break;
           
           case 'TOKEN_REFRESHED':
+            // Token refreshed, no action needed
             break;
           
-          default:
+          case 'INITIAL_SESSION':
+            // Initial session loaded, no action needed
             break;
         }
       }

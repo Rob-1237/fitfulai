@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { motion } from 'framer-motion';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
@@ -20,12 +21,26 @@ const iconMap = {
 const BottomTabBar = () => {
   const { currentPage, pages, setCurrentPage } = useUIStore();
 
+  const [isDark, setIsDark] = useState(() => localStorage.getItem('theme') === 'dark');
+
+  useEffect(() => {
+    const handleStorageChange = () => {
+      setIsDark(localStorage.getItem('theme') === 'dark');
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
   const TabButton = ({ page, isActive }) => (
     <motion.button
       className={`flex flex-col items-center justify-center px-2 py-3 rounded-lg transition-colors duration-200 ${
         isActive 
-          ? 'bg-blue-500 text-white' 
-          : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
+          ? isDark ? 'bg-[var(--color-yellow)] text-[var(--color-dk-gray)]' : 'bg-[var(--color-yellow)]' 
+          : isDark ? 'text-[var(--color-md-gray)] hover:text-[var(--color-lt-gray)] hover:bg-[var(--color-md-gray)]' : 'text-gray-600 hover:text-[var(--color-dk-gray)] hover:bg-[var(--color-md-gray)]'
+        // isActive 
+        //   ? 'bg-blue-500 text-white' 
+        //   : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
       }`}
       onClick={() => setCurrentPage(page)}
       whileTap={{ scale: 0.95 }}
@@ -34,32 +49,32 @@ const BottomTabBar = () => {
     >
       <FontAwesomeIcon 
         icon={iconMap[page]} 
-        className={`text-lg mb-1 ${isActive ? 'text-white' : ''}`} 
+        className={`text-lg my-1`} 
       />
-      <span className={`text-xs font-medium capitalize ${isActive ? 'text-white' : ''}`}>
+      <span className={`text-xs font-medium capitalize`}>
         {page}
       </span>
       
       {/* Active indicator */}
-      {isActive && (
+      {/* {isActive && (
         <motion.div
-          className="absolute -top-1 w-1 h-1 bg-white rounded-full"
+          className="absolute -top-1 w-1 h-1 bg-blue-500 rounded-full"
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
           transition={{ duration: 0.3 }}
         />
-      )}
+      )} */}
     </motion.button>
   );
 
   return (
     <motion.nav
-      className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-50"
+      className={`fixed bottom-0 left-0 right-0 ${isDark ? 'bg-[var(--color-black)]' : 'bg-[var(--color-white)]'} border-t ${isDark ? 'border-[var(--color-dk-gray)]' : 'border-[var(--color-lt-gray)]'} shadow-lg z-50`}
       initial={{ y: 100 }}
       animate={{ y: 0 }}
       transition={{ type: "spring", stiffness: 300, damping: 30 }}
     >
-      <div className="flex items-center justify-around px-2 py-1 safe-area-bottom">
+      <div className={`flex items-center justify-around ${isDark ? 'bg-[var(--color-black)]' : 'bg-[var(--color-white)]'} px-2 py-1 safe-area-bottom`}>
         {pages.map((page) => (
           <div key={page} className="flex-1 relative">
             <TabButton 

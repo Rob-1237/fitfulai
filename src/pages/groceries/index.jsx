@@ -3,11 +3,12 @@ import { motion } from "framer-motion";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBasketShopping } from "@fortawesome/pro-duotone-svg-icons";
 
-function Groceries() {
+function Groceries({ isDark }) {
     const [message, setMessage] = useState("Groceries...");
 
     return (
         <motion.div
+        className={`${isDark ? 'bg-[var(--color-black)]' : 'bg-[var(--color-white)]'}`}
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.3 }}

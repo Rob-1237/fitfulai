@@ -8,26 +8,69 @@
     font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
     line-height: 1.5;
     font-weight: 400;
-  
-    color-scheme: light dark;
-    color: rgba(255, 255, 255, 0.87);
-    background-color: #242424;
-  
+
     font-synthesis: none;
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    
-  --white: rgb(255, 255, 255);
-  
-  --black: rgb(0, 0, 0);
+
+    /* Simple theme colors */
+   
+    --color-black: #14100E;
+    --color-white: #F7F7F7;
+
+    --color-red: #E62117;
+    --color-orange: #FF6B00;
+    --color-yellow: #FFC300;
+
+    --color-dk-gray: #2E2E2E;
+    --color-md-gray: #8C8C8C;
+    --color-lt-gray: #EAEAEA;
 
 }
 
-@theme inline {
-  
-  --color-white: var(--white);
-  
-  --color-black: var(--black);
-  
+#root {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+
+/* SCROLLBAR */
+/* For WebKit browsers (Chrome, Safari, Edge) */
+::-webkit-scrollbar {
+    display: none;
+}
+
+/* For Firefox */
+* {
+    scrollbar-width: none;
+}
+
+/* For Internet Explorer and Edge (older versions) */
+* {
+    -ms-overflow-style: none;
+}
+
+
+/* INPUTS */
+input::placeholder {
+  color: rgba(0, 0, 0, 0.5) !important;
+}
+
+input::-webkit-input-placeholder {
+  color: rgba(0, 0, 0, 0.5) !important;
+}
+
+input::-moz-placeholder {
+  color: rgba(0, 0, 0, 0.5) !important;
+  opacity: 1;
+}
+
+input:-ms-input-placeholder {
+  color: rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Ensure input text is also black, not white */
+input {
+  color: rgba(0, 0, 0) !important;
 }
