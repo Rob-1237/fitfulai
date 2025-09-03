@@ -137,3 +137,142 @@ ___
 
  ___
 
+Quick sanity checks (optional but helpful)
+
+Table Editor → open each table and confirm columns/defaults.
+
+RLS → each table should show “Enabled” with the 4 policies above.
+
+If you had previously used uuid_generate_v4(), either switch to gen_random_uuid() (script above) or also run:
+
+```
+create extension if not exists "uuid-ossp";
+```
+
+(but Supabase generally recommends gen_random_uuid() + pgcrypto.)
+
+Mini test from your app (while authenticated)
+```
+// create a workout
+await supabase.from('workouts').insert([{
+  user_id: (await supabase.auth.getUser()).data.user.id,
+  title: 'Test Workout',
+  exercises: []
+}]).select();
+
+// fetch your workouts
+await supabase.from('workouts')
+  .select('*')
+  .order('created_at', { ascending: false });
+```
+
+If anything errors, paste me the exact error and we’ll fix fast.
+
+
+___
+
+
+Absolutely — when running SQL in the Supabase SQL Editor, you need to be careful. Comments are usually fine in SQL (-- for single line, /* … */ for block), but sometimes copying from docs can introduce formatting issues. Let me give you a clear, step-by-step guide so nothing breaks.
+
+Step-by-Step Rules for Executing SQL Commands in Supabase
+1. Open the SQL Editor
+
+Log in to your Supabase project.
+
+On the left sidebar, click SQL Editor.
+
+Click New query.
+
+2. Clean up your SQL
+
+Keep comments optional: -- comment and /* comment */ are valid, but remove any strange characters or copy-paste artifacts (sometimes extra backticks or bullets cause errors).
+
+Make sure each command ends with a semicolon ;.
+
+Run one logical block at a time (e.g., one function or one policy) to avoid confusing errors.
+
+3. Run Functions
+
+For example, the increment_ai_usage function:
+
+create or replace function public.increment_ai_usage(
+  user_id uuid, 
+  increment_by int default 1
+)
+returns void
+language plpgsql
+security definer
+as $$
+begin
+  update public.profiles
+  set ai_generations_used = coalesce(ai_generations_used, 0) + increment_by,
+      updated_at = now()
+  where id = user_id;
+end;
+$$;
+
+
+Rules:
+
+Use public schema if your tables are in public.
+
+Include security definer exactly as shown.
+
+Terminate the function definition with $$; (dollar quoting).
+
+Run this first.
+
+4. Run Cleanup Function
+create or replace function public.cleanup_expired_ai_cache()
+returns void
+language plpgsql
+security definer
+as $$
+begin
+  delete from public.ai_cache where expires_at < now();
+end;
+$$;
+
+
+Same rules as above.
+
+5. Schedule Cron Job (pg_cron)
+select cron.schedule(
+  'daily_ai_cache_cleanup',  -- unique job name
+  '0 0 * * *',               -- runs at 00:00 UTC daily
+  'select public.cleanup_expired_ai_cache()'
+);
+
+
+Rules:
+
+Only run after the cleanup function exists.
+
+The string '0 0 * * *' is a standard cron format: minute, hour, day, month, weekday.
+
+The SQL Editor will show a success message if the job is scheduled.
+
+6. Verify
+
+Go to Database → Jobs → Cron jobs (in Supabase Dashboard) to confirm it’s scheduled.
+
+You can test the cleanup manually with:
+
+select public.cleanup_expired_ai_cache();
+
+
+You can test increment function in JS or SQL:
+
+select public.increment_ai_usage('user-uuid-here', 2);
+
+7. General Rules
+
+Run one block at a time. If you run multiple at once, errors can be confusing.
+
+Check for schema references: always use public. prefix if needed.
+
+Backup important tables before testing new functions (optional but safe).
+
+Use semicolons ; to end each statement.
+
+Avoid copy-paste formatting issues: remove stray bullets, extra backticks, or special characters.
