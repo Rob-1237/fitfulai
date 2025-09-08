@@ -10,6 +10,7 @@ export const useProfileStore = create(
     isLoading: false,
     error: null,
     isInitialized: false,
+    isSigningOut: false,
     
     // Profile actions
     
@@ -18,6 +19,13 @@ export const useProfileStore = create(
      * @param {string} userId - User UUID from Supabase Auth
      */
     initializeProfile: async (userId) => {
+      // Skip if signing out
+      const { isSigningOut } = get();
+      if (isSigningOut) {
+        console.log('🔄 Skipping profile initialization - user is signing out');
+        return;
+      }
+      
       set({ isLoading: true, error: null });
       
       try {
@@ -59,16 +67,19 @@ export const useProfileStore = create(
      * @param {ProfileCreateData} profileData - New profile data
      */
     createProfile: async (profileData) => {
+      console.log('🔍 createProfile called with:', profileData);
       set({ isLoading: true, error: null });
       
       try {
         const { data: profile, error } = await profileAPI.createProfile(profileData);
         
         if (error) {
+          console.error('❌ Profile creation failed:', error);
           set({ error, isLoading: false });
           return false;
         }
         
+        console.log('✅ Profile created successfully:', profile);
         set({ 
           profile, 
           isLoading: false, 
@@ -78,7 +89,7 @@ export const useProfileStore = create(
         
         return true;
       } catch (err) {
-        console.error('Error creating profile:', err);
+        console.error('❌ Exception in createProfile:', err);
         set({ 
           error: 'Failed to create profile', 
           isLoading: false 
@@ -303,6 +314,13 @@ export const useProfileStore = create(
     },
     
     /**
+     * Set signing out flag to prevent API calls during logout
+     */
+    setSigningOut: (isSigningOut) => {
+      set({ isSigningOut });
+    },
+
+    /**
      * Reset profile state (for logout)
      */
     reset: () => {
@@ -310,8 +328,82 @@ export const useProfileStore = create(
         profile: null,
         isLoading: false,
         error: null,
-        isInitialized: false
+        isInitialized: false,
+        isSigningOut: false
       });
+    },
+
+    /**
+     * Emergency authentication reset - clears all auth data and reloads app
+     * Use this when auth state gets corrupted or stuck
+     */
+    resetAuthState: () => {
+      console.warn('Performing emergency auth reset...');
+      
+      try {
+        // Clear all Supabase auth-related localStorage
+        Object.keys(localStorage).forEach(key => {
+          if (key.startsWith('sb-') || key.includes('supabase')) {
+            console.log(`Clearing localStorage key: ${key}`);
+            localStorage.removeItem(key);
+          }
+        });
+        
+        // Clear session/index storage as well
+        Object.keys(sessionStorage).forEach(key => {
+          if (key.startsWith('sb-') || key.includes('supabase')) {
+            console.log(`Clearing sessionStorage key: ${key}`);
+            sessionStorage.removeItem(key);
+          }
+        });
+        
+        // Reset all stores to initial state
+        const { reset } = get();
+        reset();
+        
+        // Clear any UI state
+        const { useUIStore } = require('./useUIStore.js');
+        if (useUIStore) {
+          useUIStore.getState().closeDrawer();
+        }
+        
+        console.log('Auth reset complete - reloading page...');
+        
+        // Force page reload to completely reset the app
+        window.location.href = '/';
+        
+      } catch (error) {
+        console.error('Error during auth reset:', error);
+        // Fallback: still try to reload
+        window.location.reload();
+      }
+    },
+
+    /**
+     * Check if auth state appears corrupted
+     * @returns {boolean} Whether auth state seems corrupted
+     */
+    isAuthStateCorrupted: () => {
+      const { profile, isInitialized, isLoading } = get();
+      
+      // Check for common corruption patterns
+      const hasCorruptedTokens = Object.keys(localStorage).some(key => {
+        if (key.startsWith('sb-') && key.includes('auth-token')) {
+          try {
+            const data = JSON.parse(localStorage.getItem(key));
+            // Check if token exists but is malformed or expired
+            return !data || !data.access_token || data.expires_at < Date.now() / 1000;
+          } catch {
+            return true; // Malformed JSON
+          }
+        }
+        return false;
+      });
+      
+      // Auth appears stuck - initialized but no profile and not loading
+      const stuckState = isInitialized && !profile && !isLoading;
+      
+      return hasCorruptedTokens || stuckState;
     },
     
     // Computed getters

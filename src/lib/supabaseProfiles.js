@@ -48,39 +48,47 @@ export const profileAPI = {
    */
   async createProfile(profileData) {
     try {
+      console.log('🔍 profileAPI.createProfile called with:', profileData);
+      
       // Validate input
       const errors = validateProfile(profileData);
       if (errors.length > 0) {
+        console.error('❌ Validation failed:', errors);
         return { 
           data: null, 
           error: `Validation failed: ${errors.map(e => e.message).join(', ')}` 
         };
       }
 
+      const insertData = {
+        id: profileData.id,
+        email: profileData.email,
+        name: profileData.name,
+        tier: profileData.tier || 'free',
+        onboarding_completed: profileData.onboarding_completed || false,
+        ai_generations_used: 0,
+        ai_generations_reset: new Date().toISOString(),
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+      
+      console.log('🔍 Insert data:', insertData);
+
       const { data, error } = await supabase
         .from('profiles')
-        .insert([{
-          id: profileData.id,
-          email: profileData.email,
-          name: profileData.name,
-          tier: profileData.tier || 'free',
-          onboarding_completed: profileData.onboarding_completed || false,
-          ai_generations_used: 0,
-          ai_generations_reset: new Date().toISOString(),
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        }])
+        .insert([insertData])
         .select()
         .single();
 
       if (error) {
-        console.error('Error creating profile:', error);
+        console.error('❌ Supabase insert error:', error);
         return { data: null, error: error.message };
       }
 
+      console.log('✅ Profile inserted successfully:', data);
       return { data, error: null };
     } catch (err) {
-      console.error('Exception in createProfile:', err);
+      console.error('❌ Exception in createProfile:', err);
       return { data: null, error: 'Failed to create profile' };
     }
   },

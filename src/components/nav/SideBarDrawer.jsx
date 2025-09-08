@@ -1,30 +1,30 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from 'framer-motion';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
   faHome, 
   faPersonRunning, 
   faPlateUtensils, 
   faBasketShopping, 
-  faCommentsQuestion,
+  faChartUser,
   faBars,
   faTimes
 } from '@fortawesome/pro-duotone-svg-icons';
 import { useUIStore } from '../../stores/useUIStore';
 
-const iconMap = {
-  home: faHome,
-  workouts: faPersonRunning,
-  meals: faPlateUtensils,
-  groceries: faBasketShopping,
-  about: faCommentsQuestion
-};
+const navigationItems = [
+  { path: '/', page: 'home', icon: faHome, label: 'Home' },
+  { path: '/workouts', page: 'workouts', icon: faPersonRunning, label: 'Workouts' },
+  { path: '/meals', page: 'meals', icon: faPlateUtensils, label: 'Meals' },
+  { path: '/groceries', page: 'groceries', icon: faBasketShopping, label: 'Groceries' },
+  { path: '/dashboard', page: 'dashboard', icon: faChartUser, label: 'Dashboard' }
+];
 
 const SidebarDrawer = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
   const { 
-    currentPage, 
-    pages, 
-    setCurrentPage, 
     drawerOpen, 
     toggleDrawer, 
     closeDrawer 
@@ -41,24 +41,28 @@ const SidebarDrawer = () => {
     return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
+  const handleNavigation = (path) => {
+    navigate(path);
+    closeDrawer(); // Auto-close drawer after navigation
+  };
 
-  const NavItem = ({ page, isActive }) => (
+  const NavItem = ({ item, isActive }) => (
     <motion.button
       className={`flex items-center w-full px-4 py-3 rounded-lg text-left transition-colors duration-200 ${
         isActive
           ? 'bg-[var(--color-yellow)] text-[var(--color-dk-gray)] shadow-md'
           : isDark ? 'text-[var(--color-md-gray)] hover:bg-[var(--color-lt-gray)] hover:text-[var(--color-dk-gray)]' : 'text-[var(--color-md-gray)] hover:bg-[var(--color-lt-gray)] hover:text-[var(--color-dk-gray)]'
       }`}
-      onClick={() => setCurrentPage(page)}
+      onClick={() => handleNavigation(item.path)}
       whileHover={!isActive ? { x: 4 } : {}}
       whileTap={{ scale: 0.98 }}
     >
       <FontAwesomeIcon 
-        icon={iconMap[page]} 
+        icon={item.icon} 
         className={`text-lg mr-3`} 
       />
-      <span className={`font-medium capitalize`}>
-        {page}
+      <span className={`font-medium`}>
+        {item.label}
       </span>
       
       {/* Active indicator */}
@@ -127,16 +131,16 @@ const SidebarDrawer = () => {
 
           {/* Navigation Items */}
           <div className="flex-1 px-4 py-6 space-y-2">
-            {pages.map((page, index) => (
+            {navigationItems.map((item, index) => (
               <motion.div
-                key={page}
+                key={item.page}
                 initial={{ x: -50, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
                 transition={{ delay: index * 0.1 }}
               >
                 <NavItem 
-                  page={page} 
-                  isActive={currentPage === page} 
+                  item={item} 
+                  isActive={location.pathname === item.path} 
                 />
               </motion.div>
             ))}

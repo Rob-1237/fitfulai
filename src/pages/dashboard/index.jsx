@@ -3,8 +3,8 @@ import { motion } from "framer-motion";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCommentsQuestion } from "@fortawesome/pro-duotone-svg-icons";
 
-function About({ isDark }) {
-    const [message, setMessage] = useState("About...");
+function Dashboard({ isDark }) {
+    const [message, setMessage] = useState("Dashboard...");
 
     return (
         <motion.div
@@ -19,4 +19,4 @@ function About({ isDark }) {
     );
 }
 
-export default About;
+export default Dashboard;

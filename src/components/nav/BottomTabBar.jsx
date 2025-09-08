@@ -1,25 +1,28 @@
 import { useEffect, useState } from "react";
 import { motion } from 'framer-motion';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
   faHome, 
   faPersonRunning, 
   faPlateUtensils, 
   faBasketShopping, 
-  faCommentsQuestion 
+  faChartUser 
 } from '@fortawesome/pro-duotone-svg-icons';
 import { useUIStore } from '../../stores/useUIStore';
 
-const iconMap = {
-  home: faHome,
-  workouts: faPersonRunning,
-  meals: faPlateUtensils,
-  groceries: faBasketShopping,
-  about: faCommentsQuestion
-};
+const navigationItems = [
+  { path: '/', page: 'home', icon: faHome, label: 'Home' },
+  { path: '/workouts', page: 'workouts', icon: faPersonRunning, label: 'Workouts' },
+  { path: '/meals', page: 'meals', icon: faPlateUtensils, label: 'Meals' },
+  { path: '/groceries', page: 'groceries', icon: faBasketShopping, label: 'Groceries' },
+  { path: '/dashboard', page: 'dashboard', icon: faChartUser, label: 'Dashboard' }
+];
 
 const BottomTabBar = () => {
-  const { currentPage, pages, setCurrentPage } = useUIStore();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { closeDrawer } = useUIStore();
 
   const [isDark, setIsDark] = useState(() => localStorage.getItem('theme') === 'dark');
 
@@ -32,38 +35,30 @@ const BottomTabBar = () => {
     return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
-  const TabButton = ({ page, isActive }) => (
+  const handleNavigation = (path) => {
+    navigate(path);
+    closeDrawer(); // Auto-close drawer after navigation
+  };
+
+  const TabButton = ({ item, isActive }) => (
     <motion.button
       className={`flex flex-col items-center justify-center px-2 py-3 rounded-lg transition-colors duration-200 ${
         isActive 
           ? isDark ? 'bg-[var(--color-yellow)] text-[var(--color-dk-gray)]' : 'bg-[var(--color-yellow)]' 
           : isDark ? 'text-[var(--color-md-gray)] hover:text-[var(--color-lt-gray)] hover:bg-[var(--color-md-gray)]' : 'text-gray-600 hover:text-[var(--color-dk-gray)] hover:bg-[var(--color-md-gray)]'
-        // isActive 
-        //   ? 'bg-blue-500 text-white' 
-        //   : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
       }`}
-      onClick={() => setCurrentPage(page)}
+      onClick={() => handleNavigation(item.path)}
       whileTap={{ scale: 0.95 }}
       animate={isActive ? { y: -2 } : { y: 0 }}
       transition={{ duration: 0.2 }}
     >
       <FontAwesomeIcon 
-        icon={iconMap[page]} 
+        icon={item.icon} 
         className={`text-lg my-1`} 
       />
-      <span className={`text-xs font-medium capitalize`}>
-        {page}
+      <span className={`text-xs font-medium`}>
+        {item.label}
       </span>
-      
-      {/* Active indicator */}
-      {/* {isActive && (
-        <motion.div
-          className="absolute -top-1 w-1 h-1 bg-blue-500 rounded-full"
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          transition={{ duration: 0.3 }}
-        />
-      )} */}
     </motion.button>
   );
 
@@ -75,11 +70,11 @@ const BottomTabBar = () => {
       transition={{ type: "spring", stiffness: 300, damping: 30 }}
     >
       <div className={`flex items-center justify-around ${isDark ? 'bg-[var(--color-black)]' : 'bg-[var(--color-white)]'} px-2 py-1 safe-area-bottom`}>
-        {pages.map((page) => (
-          <div key={page} className="flex-1 relative">
+        {navigationItems.map((item) => (
+          <div key={item.page} className="flex-1 relative">
             <TabButton 
-              page={page} 
-              isActive={currentPage === page} 
+              item={item} 
+              isActive={location.pathname === item.path} 
             />
           </div>
         ))}

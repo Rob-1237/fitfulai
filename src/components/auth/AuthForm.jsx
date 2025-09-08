@@ -1,14 +1,15 @@
 import { useState } from "react";
-import { supabase } from "../../lib/supabaseClient";
-
+import { useAuth } from "../../hooks/useAuth";
 import { useToast } from "../ui/ToastProvider";
 
 export default function AuthForm({ mode, setMode, onClose }) {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [name, setName] = useState("");
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState("");
 
+    const { signUp, signIn, resetPassword } = useAuth();
     const { addToast } = useToast();
 
     const handleSubmit = async (e) => {
@@ -18,19 +19,19 @@ export default function AuthForm({ mode, setMode, onClose }) {
 
         try {
             if (mode === "signin") {
-                const { error } = await supabase.auth.signInWithPassword({ email, password });
-                if (error) throw error;
+                const { success, error } = await signIn(email, password);
+                if (!success) throw new Error(error);
                 addToast("Welcome back!", "success");
                 onClose();
             }
             if (mode === "signup") {
-                const { error } = await supabase.auth.signUp({ email, password });
-                if (error) throw error;
-                setMessage("Check your email for a confirmation link.");
+                const { success, error } = await signUp(email, password, name);
+                if (!success) throw new Error(error);
+                setMessage("Account created! Check your email for a confirmation link.");
             }
             if (mode === "forgot") {
-                const { error } = await supabase.auth.resetPasswordForEmail(email);
-                if (error) throw error;
+                const { success, error } = await resetPassword(email);
+                if (!success) throw new Error(error);
                 setMessage("Password reset link sent.");
             }
         } catch (err) {
@@ -48,6 +49,17 @@ export default function AuthForm({ mode, setMode, onClose }) {
                 {mode === "signup" && "Create Account"}
                 {mode === "forgot" && "Reset Password"}
             </h2>
+
+            {mode === "signup" && (
+                <input
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+                    placeholder="Name"
+                    required
+                />
+            )}
 
             <input
                 type="email"

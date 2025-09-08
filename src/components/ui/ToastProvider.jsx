@@ -24,7 +24,7 @@ export function ToastProvider({ children }) {
           <div
             key={toast.id}
             className={`px-4 py-2 rounded-md shadow-lg ${
-              toast.type === 'success' ? 'bg-green-500 text-white' :
+              toast.type === 'success' ? 'bg-green-600 text-white' :
               toast.type === 'error' ? 'bg-red-500 text-white' :
               'bg-blue-500 text-white'
             }`}
