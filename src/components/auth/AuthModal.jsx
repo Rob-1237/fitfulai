@@ -1,33 +1,30 @@
 import { Dialog } from "@headlessui/react";
 import { X } from "lucide-react";
-
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
-import AuthForm from "./AuthForm";
+import SimpleAuthForm from "./SimpleAuthForm";
 
-export default function AuthModal({ open, onClose }) {
-    const [mode, setMode] = useState("signin"); // "signin" | "signup" | "forgot"
+export default function AuthModal({ open, onClose, mode = "signin" }) {
+    const [currentMode, setCurrentMode] = useState(mode);
 
     return (
         <AnimatePresence>
-
             {open && (
                 <Dialog open={open} onClose={onClose} className="relative z-50">
                     <motion.div
                         className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
-                        onClick={onClose} // backdrop closes modal
+                        onClick={onClose}
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                     >
                         <motion.div
                             className="relative bg-white rounded-2xl shadow-xl w-full max-w-md p-6"
-                            onClick={(e) => e.stopPropagation()} // prevent backdrop close when clicking inside
+                            onClick={(e) => e.stopPropagation()}
                             initial={{ y: -50, opacity: 0 }}
                             animate={{ y: 0, opacity: 1 }}
                             exit={{ y: 50, opacity: 0 }}
                         >
-                            {/* Close button */}
                             <button
                                 onClick={onClose}
                                 className="absolute top-3 right-3 text-gray-500 hover:text-gray-800"
@@ -35,7 +32,7 @@ export default function AuthModal({ open, onClose }) {
                                 <X className="w-5 h-5" />
                             </button>
 
-                            <AuthForm mode={mode} setMode={setMode} onClose={onClose} />
+                            <SimpleAuthForm mode={currentMode} setMode={setCurrentMode} onClose={onClose} />
                         </motion.div>
                     </motion.div>
                 </Dialog>
@@ -43,6 +40,3 @@ export default function AuthModal({ open, onClose }) {
         </AnimatePresence>
     );
 }
-
-
-
