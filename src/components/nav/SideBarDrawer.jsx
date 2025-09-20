@@ -2,11 +2,11 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { 
-  faHome, 
-  faPersonRunning, 
-  faPlateUtensils, 
-  faBasketShopping, 
+import {
+  faHome,
+  faPersonRunning,
+  faPlateUtensils,
+  faBasketShopping,
   faChartUser,
   faBars,
   faTimes
@@ -24,10 +24,10 @@ const navigationItems = [
 const SidebarDrawer = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { 
-    drawerOpen, 
-    toggleDrawer, 
-    closeDrawer 
+  const {
+    isDrawerOpen: drawerOpen,
+    toggleDrawer,
+    closeDrawer
   } = useUIStore();
 
   const [isDark, setIsDark] = useState(() => localStorage.getItem('theme') === 'dark');

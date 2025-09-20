@@ -1,14 +1,47 @@
-import { useState } from "react";
+import { useEffect } from "react";
+import { Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "./hooks/useAuth";
+import { useUIStore } from "./stores/useUIStore";
 import { ToastProvider } from "./components/ui/ToastProvider";
+import ResponsiveNavigation from "./components/nav/ResponsiveNavigation";
+import TopNavigation from "./components/nav/TopNavigation";
 import AuthModal from "./components/auth/AuthModal";
+
+// Import pages
+import Home from "./pages/home/index.jsx";
+import Workouts from "./pages/workouts/index.jsx";
+import Meals from "./pages/meals/index.jsx";
+import Groceries from "./pages/groceries/index.jsx";
+import Dashboard from "./pages/dashboard/index.jsx";
+
 import "./styles/App.css";
 
 function App() {
-  const { user, isInitialized, signOut } = useAuth();
-  const [showAuthModal, setShowAuthModal] = useState(false);
+  console.log('🚀 APP COMPONENT MOUNTING');
+
+  const { isInitialized } = useAuth();
+  const { isDark, isMobile, setIsMobile, modals, closeModal } = useUIStore();
+
+  console.log('🚀 App state:', {
+    isInitialized,
+    isDark,
+    isMobile,
+    modals
+  });
+
+  // Mobile detection
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, [setIsMobile]);
 
   if (!isInitialized) {
+    console.log('⏳ App not initialized yet, showing loading screen');
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-lg">Loading...</div>
@@ -16,50 +49,30 @@ function App() {
     );
   }
 
+  console.log('✅ App initialized, rendering main application');
+
   return (
     <ToastProvider>
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="bg-white p-8 rounded-lg shadow-lg max-w-md w-full">
-          <h1 className="text-2xl font-bold text-center mb-6">FitfulAI Firebase Test</h1>
+        <div className={`min-h-screen ${isDark ? 'bg-[var(--color-black)]' : 'bg-[var(--color-white)]'} ${isMobile ? 'pb-20' : ''} pt-16`}>
+          <TopNavigation isDark={isDark} />
 
-          {user ? (
-            <div className="text-center space-y-4">
-              <div className="p-4 bg-green-50 border border-green-200 rounded">
-                <p className="text-green-800 font-medium">✅ Authenticated!</p>
-                <p className="text-sm text-green-600 mt-1">
-                  Email: {user.email}
-                </p>
-                <p className="text-sm text-green-600">
-                  UID: {user.uid}
-                </p>
-              </div>
+          <Routes>
+            <Route path="/" element={<Home isDark={isDark} />} />
+            <Route path="/workouts" element={<Workouts isDark={isDark} />} />
+            <Route path="/meals" element={<Meals isDark={isDark} />} />
+            <Route path="/groceries" element={<Groceries isDark={isDark} />} />
+            <Route path="/dashboard" element={<Dashboard isDark={isDark} />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
 
-              <button
-                onClick={signOut}
-                className="w-full bg-red-600 text-white py-2 px-4 rounded hover:bg-red-700"
-              >
-                Sign Out
-              </button>
-            </div>
-          ) : (
-            <div className="text-center space-y-4">
-              <p className="text-gray-600">Please sign in to test Firebase authentication</p>
-              <button
-                onClick={() => setShowAuthModal(true)}
-                className="w-full bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700"
-              >
-                Sign In / Sign Up
-              </button>
-            </div>
-          )}
+          <ResponsiveNavigation />
+
+          <AuthModal
+            open={modals.auth}
+            onClose={() => closeModal('auth')}
+          />
         </div>
-
-        <AuthModal
-          open={showAuthModal}
-          onClose={() => setShowAuthModal(false)}
-        />
-      </div>
-    </ToastProvider>
+      </ToastProvider>
   );
 }
 

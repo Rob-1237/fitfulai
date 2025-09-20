@@ -1,20 +1,327 @@
-import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPlateUtensils } from "@fortawesome/pro-duotone-svg-icons";
+import { faPlateUtensils, faUtensils, faClock, faFireFlame } from "@fortawesome/pro-duotone-svg-icons";
+import { useAuth } from "../../hooks/useAuth";
+import MealsContent from "../../components/content/MealsContent";
 
 function Meals({ isDark }) {
-    const [message, setMessage] = useState("Meals...");
+    const { user, userProfile } = useAuth();
+    const [showSplash, setShowSplash] = useState(true);
+
+    // Single state logic
+    const userState = user && userProfile?.onboardingCompleted ? "onboarded" : user ? "logged" : "unlogged";
+
+    console.log('🍽️ Meals page - userState:', userState, {
+        hasUser: !!user,
+        hasProfile: !!userProfile,
+        onboardingCompleted: userProfile?.onboardingCompleted
+    });
+
+    // Handle splash screen timing
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setShowSplash(false);
+        }, 1200); // Show splash for 1.2 seconds minimum
+
+        return () => clearTimeout(timer);
+    }, []);
+
+    const getMessage = () => {
+        switch (userState) {
+            case "unlogged":
+                return "Discover AI-powered meal planning - Sign in to get started!";
+            case "logged":
+                return "Complete your profile to unlock personalized meal plans!";
+            case "onboarded":
+                return "Your personalized meal plans are ready!";
+            default:
+                return "Loading meals...";
+        }
+    };
+
+    const SplashScreen = () => (
+        <motion.div
+            className="flex flex-col items-center justify-center py-24"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 1.05 }}
+            transition={{ duration: 0.5 }}
+        >
+            {/* App Logo + Page Icon */}
+            <motion.div
+                className="flex items-center space-x-4 mb-6"
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.2, duration: 0.5 }}
+            >
+                <div className={`text-4xl ${isDark ? 'text-[var(--color-orange)]' : 'text-[var(--color-dk-gray)]'} font-bold`}>
+                    FitfulAI
+                </div>
+                <FontAwesomeIcon icon={faPlateUtensils} className="text-orange-500 text-4xl" />
+            </motion.div>
+
+            {/* Page Title */}
+            <motion.h1
+                className={`text-3xl font-bold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.2, duration: 0.5 }}
+            >
+                Meals
+            </motion.h1>
+
+            {/* Loading Indicator */}
+            <motion.div
+                className="flex items-center space-x-3"
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.4, duration: 0.5 }}
+            >
+                <div className="flex space-x-1">
+                    <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></div>
+                    <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
+                    <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse" style={{ animationDelay: '0.4s' }}></div>
+                </div>
+                <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+                    Preparing your personalized meal plans...
+                </span>
+            </motion.div>
+        </motion.div>
+    );
+
+    const PreviewContent = () => (
+        <div className="max-w-6xl mx-auto">
+            {/* Feature Intro */}
+            <div className="text-center mb-12">
+                <h2 className={`text-3xl font-bold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                    See Your Personalized Meal Plans
+                </h2>
+                <p className={`text-lg ${isDark ? 'text-gray-300' : 'text-gray-600'} max-w-2xl mx-auto`}>
+                    AI-powered nutrition plans tailored to your dietary preferences, goals, and macro targets.
+                </p>
+            </div>
+
+            {/* Preview Cards Grid */}
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+                {/* Today's Meals Card */}
+                <motion.div
+                    className={`p-6 rounded-xl border ${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} shadow-lg`}
+                    whileHover={{ scale: 1.02, y: -5 }}
+                    transition={{ duration: 0.2 }}
+                >
+                    <div className="flex items-center space-x-3 mb-4">
+                        <FontAwesomeIcon icon={faPlateUtensils} className="text-orange-500 text-2xl" />
+                        <h3 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                            Today's Meals
+                        </h3>
+                    </div>
+                    <div className="space-y-3">
+                        <div className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+                            <strong>Breakfast:</strong> Protein Oatmeal Bowl
+                        </div>
+                        <div className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+                            <strong>Lunch:</strong> Grilled Chicken Salad
+                        </div>
+                        <div className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+                            <strong>Dinner:</strong> Salmon with Vegetables
+                        </div>
+                        <div className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+                            <strong>Snack:</strong> Greek Yogurt & Berries
+                        </div>
+                    </div>
+                    <div className="mt-4 pt-4 border-t border-gray-200">
+                        <span className="text-sm text-orange-600 font-medium">1,850 calories planned</span>
+                    </div>
+                </motion.div>
+
+                {/* Recipe Suggestion Card */}
+                <motion.div
+                    className={`p-6 rounded-xl border ${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} shadow-lg`}
+                    whileHover={{ scale: 1.02, y: -5 }}
+                    transition={{ duration: 0.2 }}
+                >
+                    <div className="flex items-center space-x-3 mb-4">
+                        <FontAwesomeIcon icon={faUtensils} className="text-green-500 text-2xl" />
+                        <h3 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                            Next Meal
+                        </h3>
+                    </div>
+                    <div className="space-y-3">
+                        <div className={`text-sm font-medium ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>
+                            Protein Power Bowl
+                        </div>
+                        <div className="flex items-center space-x-4">
+                            <div className="flex items-center space-x-1">
+                                <FontAwesomeIcon icon={faClock} className="text-blue-500" />
+                                <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>25 min</span>
+                            </div>
+                            <div className="flex items-center space-x-1">
+                                <FontAwesomeIcon icon={faFireFlame} className="text-red-500" />
+                                <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>520 cal</span>
+                            </div>
+                        </div>
+                        <div className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                            Quinoa, grilled chicken, roasted vegetables, avocado
+                        </div>
+                    </div>
+                    <button className="mt-4 w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 transition-colors">
+                        View Recipe
+                    </button>
+                </motion.div>
+
+                {/* Macro Tracker Card */}
+                <motion.div
+                    className={`p-6 rounded-xl border ${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} shadow-lg`}
+                    whileHover={{ scale: 1.02, y: -5 }}
+                    transition={{ duration: 0.2 }}
+                >
+                    <div className="flex items-center space-x-3 mb-4">
+                        <FontAwesomeIcon icon={faFireFlame} className="text-purple-500 text-2xl" />
+                        <h3 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                            Daily Targets
+                        </h3>
+                    </div>
+                    <div className="space-y-3">
+                        <div>
+                            <div className="flex justify-between mb-1">
+                                <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Protein</span>
+                                <span className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>45/150g</span>
+                            </div>
+                            <div className="w-full bg-gray-200 rounded-full h-2">
+                                <div className="bg-blue-600 h-2 rounded-full" style={{ width: '30%' }}></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div className="flex justify-between mb-1">
+                                <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Carbs</span>
+                                <span className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>85/200g</span>
+                            </div>
+                            <div className="w-full bg-gray-200 rounded-full h-2">
+                                <div className="bg-green-600 h-2 rounded-full" style={{ width: '42%' }}></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div className="flex justify-between mb-1">
+                                <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Fat</span>
+                                <span className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>28/65g</span>
+                            </div>
+                            <div className="w-full bg-gray-200 rounded-full h-2">
+                                <div className="bg-purple-600 h-2 rounded-full" style={{ width: '43%' }}></div>
+                            </div>
+                        </div>
+                    </div>
+                </motion.div>
+            </div>
+
+            {/* Feature Benefits */}
+            <div className="grid md:grid-cols-2 gap-8 mb-12">
+                <div>
+                    <h3 className={`text-xl font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                        Nutrition Made Simple
+                    </h3>
+                    <ul className={`space-y-2 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+                        <li>• Meals matched to your calorie targets</li>
+                        <li>• Recipes that fit your dietary preferences</li>
+                        <li>• Automatic macro tracking and optimization</li>
+                        <li>• Weekly meal planning and prep guides</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 className={`text-xl font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                        Smart Recipe Engine
+                    </h3>
+                    <ul className={`space-y-2 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+                        <li>• AI-generated recipes based on preferences</li>
+                        <li>• Ingredient substitutions for allergies</li>
+                        <li>• Cooking time and difficulty ratings</li>
+                        <li>• Nutritional breakdowns for every meal</li>
+                    </ul>
+                </div>
+            </div>
+
+            {/* CTA Button */}
+            <div className="text-center">
+                <motion.button
+                    className="bg-orange-600 text-white px-8 py-4 rounded-lg font-semibold text-lg hover:bg-orange-700 transition-colors"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                >
+                    Get Started with Your Meal Plan
+                </motion.button>
+            </div>
+        </div>
+    );
 
     return (
         <motion.div
-        className={`${isDark ? 'bg-[var(--color-black)]' : 'bg-[var(--color-white)]'}`}
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
+            className={`min-h-screen ${isDark ? 'bg-[var(--color-black)]' : 'bg-[var(--color-white)]'}`}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
             transition={{ duration: 0.3 }}
         >
-            <FontAwesomeIcon icon={faPlateUtensils} className="text-orange-500" />
-            <h1>{message}</h1>
+            <AnimatePresence mode="wait">
+                {showSplash ? (
+                    <motion.div key="splash">
+                        <SplashScreen />
+                    </motion.div>
+                ) : (
+                    <motion.div
+                        key="content"
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.6 }}
+                    >
+                        {/* Header Section */}
+                        <div className="p-8">
+                            <motion.div
+                                className="flex items-center space-x-4 mb-8"
+                                initial={{ y: -20, opacity: 0 }}
+                                animate={{ y: 0, opacity: 1 }}
+                                transition={{ delay: 0.1, duration: 0.5 }}
+                            >
+                                <FontAwesomeIcon icon={faPlateUtensils} className="text-orange-500 text-3xl" />
+                                <div>
+                                    <h1 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-black'}`}>
+                                        Meals
+                                    </h1>
+                                    <p className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+                                        State: {userState}
+                                    </p>
+                                </div>
+                            </motion.div>
+
+                            {/* Centered State Message - Only show for non-onboarded users */}
+                            {userState !== "onboarded" && (
+                                <motion.div
+                                    className="text-center mb-12"
+                                    initial={{ y: 20, opacity: 0 }}
+                                    animate={{ y: 0, opacity: 1 }}
+                                    transition={{ delay: 0.3, duration: 0.5 }}
+                                >
+                                    <h2 className={`text-xl font-medium ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>
+                                        {getMessage()}
+                                    </h2>
+                                </motion.div>
+                            )}
+                        </div>
+
+                        {/* Content based on user state */}
+                        <motion.div
+                            className="px-8 pb-8"
+                            initial={{ y: 30, opacity: 0 }}
+                            animate={{ y: 0, opacity: 1 }}
+                            transition={{ delay: 0.4, duration: 0.6 }}
+                        >
+                            {userState === "onboarded" ? (
+                                <MealsContent isDark={isDark} />
+                            ) : (
+                                <PreviewContent />
+                            )}
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </motion.div>
     );
 }

@@ -12,31 +12,89 @@ export default function SimpleAuthForm({ mode, setMode, onClose }) {
     const { addToast } = useToast();
 
     const handleSubmit = async (e) => {
+        console.log('📋 FORM SUBMISSION STARTED');
+        console.log('📋 Form mode:', mode);
+        console.log('📋 Form data:', {
+            email: email,
+            emailValid: email?.includes('@'),
+            passwordLength: password?.length,
+            name: name,
+            nameLength: name?.length
+        });
+
         e.preventDefault();
         setLoading(true);
 
         try {
+            // Basic validation
+            console.log('✅ Running form validation...');
+            if (!email || !email.includes('@')) {
+                console.warn('⚠️ Validation failed: Invalid email');
+                throw new Error('Please enter a valid email address');
+            }
+
             if (mode === "signin") {
+                console.log('🔑 Processing signin...');
+                if (!password) {
+                    console.warn('⚠️ Validation failed: Missing password');
+                    throw new Error('Password is required');
+                }
+
+                console.log('🔑 Calling signIn function...');
                 const { success, error } = await signIn(email, password);
+                console.log('🔑 SignIn result:', { success, error });
+
                 if (!success) throw new Error(error);
+                console.log('✅ SignIn successful, showing success toast');
                 addToast("Welcome back!", "success");
                 onClose();
             }
+
             if (mode === "signup") {
+                console.log('📝 Processing signup...');
+                if (!password) {
+                    console.warn('⚠️ Validation failed: Missing password');
+                    throw new Error('Password is required');
+                }
+                if (password.length < 6) {
+                    console.warn('⚠️ Validation failed: Password too short');
+                    throw new Error('Password must be at least 6 characters');
+                }
+                if (!name || name.trim().length < 2) {
+                    console.warn('⚠️ Validation failed: Name too short');
+                    throw new Error('Name must be at least 2 characters');
+                }
+
+                console.log('📝 All validation passed, calling signUp function...');
                 const { success, error } = await signUp(email, password, name);
+                console.log('📝 SignUp result:', { success, error });
+
                 if (!success) throw new Error(error);
+                console.log('✅ SignUp successful, showing success toast');
                 addToast("Account created successfully!", "success");
                 onClose();
             }
+
             if (mode === "forgot") {
+                console.log('🔐 Processing password reset...');
                 const { success, error } = await resetPassword(email);
+                console.log('🔐 Password reset result:', { success, error });
+
                 if (!success) throw new Error(error);
+                console.log('✅ Password reset successful, showing success toast');
                 addToast("Password reset email sent!", "success");
             }
         } catch (err) {
+            console.error('❌ FORM SUBMISSION FAILED');
+            console.error('❌ Form error details:', {
+                message: err.message,
+                mode: mode,
+                formData: { email, passwordLength: password?.length, name }
+            });
             addToast(err.message, "error");
         } finally {
             setLoading(false);
+            console.log('📋 Form submission complete, loading set to false');
         }
     };
 

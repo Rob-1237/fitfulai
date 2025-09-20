@@ -2,12 +2,12 @@ import { useEffect, useState } from "react";
 import { motion } from 'framer-motion';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { 
-  faHome, 
-  faPersonRunning, 
-  faPlateUtensils, 
-  faBasketShopping, 
-  faChartUser 
+import {
+  faHome,
+  faPersonRunning,
+  faPlateUtensils,
+  faBasketShopping,
+  faChartUser
 } from '@fortawesome/pro-duotone-svg-icons';
 import { useUIStore } from '../../stores/useUIStore';
 
