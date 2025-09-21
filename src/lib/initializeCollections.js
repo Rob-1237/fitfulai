@@ -15,7 +15,7 @@ import { db } from './firebase';
  * @param {Object} onboardingData - Data collected during onboarding
  */
 export const initializeUserCollections = async (userId, userData, onboardingData = {}) => {
-  console.log('=% Initializing collections for user:', userId);
+  console.log('ðŸ“‹ Initializing collections for user:', userId);
 
   try {
     // Check if user already has collections initialized
@@ -50,7 +50,7 @@ export const initializeUserCollections = async (userId, userData, onboardingData
  * Based on lines 43-78 from FIRESTORE_SETUP_GUIDE.md
  */
 const createUserProfile = async (userId, userData, onboardingData) => {
-  console.log('=Ë Creating profile document...');
+  console.log('=ï¿½ Creating profile document...');
 
   const profileData = {
     // Basic user info
@@ -118,7 +118,7 @@ const createUserProfile = async (userId, userData, onboardingData) => {
  * Based on lines 84-192 evaluation - complex structure for Pro tier
  */
 const createWorkoutsCollection = async (userId) => {
-  console.log('=ª Creating workouts collection structure...');
+  console.log('=ï¿½ Creating workouts collection structure...');
 
   // Create a placeholder workout document to establish schema
   const placeholderWorkout = {
@@ -313,7 +313,7 @@ const createMealsCollection = async (userId) => {
  * Based on user requirements: list, estimatedTotal, checkedItems + additional suggestions
  */
 const createGroceriesCollection = async (userId) => {
-  console.log('=Ò Creating groceries collection structure...');
+  console.log('=ï¿½ Creating groceries collection structure...');
 
   const placeholderGroceryList = {
     id: `${userId}_groceries_placeholder`,
@@ -445,7 +445,7 @@ export const userCollectionsExist = async (userId) => {
  * @param {string} userId
  */
 export const cleanupPlaceholders = async (userId) => {
-  console.log('>ù Cleaning up placeholder documents...');
+  console.log('>ï¿½ Cleaning up placeholder documents...');
   // This will be implemented later when we have real data generation
   // Will query and remove documents with type: 'placeholder'
 };

@@ -16,6 +16,14 @@ import Dashboard from "./pages/dashboard/index.jsx";
 
 import "./styles/App.css";
 
+// Import test functions for development
+import { testFullWorkoutFlow } from "./lib/testFullWorkoutFlow.js";
+
+// Make test function available in browser console for development
+if (import.meta.env.DEV) {
+  window.testFullWorkoutFlow = testFullWorkoutFlow;
+}
+
 function App() {
   console.log('🚀 APP COMPONENT MOUNTING');
 

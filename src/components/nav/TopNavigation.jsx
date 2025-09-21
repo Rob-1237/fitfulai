@@ -4,12 +4,12 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUser, faSignIn, faSignOut, faCog } from '@fortawesome/pro-duotone-svg-icons';
 import { useAuth } from '../../hooks/useAuth';
 import { useUIStore } from '../../stores/useUIStore';
-import OnboardingWizard from '../onboarding/OnboardingWizard';
 
 const TopNavigation = ({ isDark }) => {
   const { user, userProfile, signOut } = useAuth();
   const { openModal } = useUIStore();
   const [showOnboardingWizard, setShowOnboardingWizard] = useState(false);
+  const [OnboardingWizard, setOnboardingWizard] = useState(null);
 
   // Single state logic
   const userState = user && userProfile?.onboardingCompleted ? "onboarded" : user ? "logged" : "unlogged";
@@ -22,8 +22,21 @@ const TopNavigation = ({ isDark }) => {
     openModal('auth');
   };
 
-  const handleGetStarted = () => {
+  const handleGetStarted = async () => {
     console.log('🔝 Opening onboarding wizard');
+
+    // Dynamically import OnboardingWizard only when needed
+    if (!OnboardingWizard) {
+      try {
+        console.log('🔝 Dynamically loading OnboardingWizard component...');
+        const { default: OnboardingWizardComponent } = await import('../onboarding/OnboardingWizard');
+        setOnboardingWizard(() => OnboardingWizardComponent);
+      } catch (error) {
+        console.error('🔴 Failed to load OnboardingWizard:', error);
+        return;
+      }
+    }
+
     setShowOnboardingWizard(true);
   };
 
@@ -93,11 +106,13 @@ const TopNavigation = ({ isDark }) => {
         {renderCTA()}
       </div>
 
-      {/* Onboarding Wizard Modal */}
-      <OnboardingWizard
-        open={showOnboardingWizard}
-        onClose={() => setShowOnboardingWizard(false)}
-      />
+      {/* Onboarding Wizard Modal - Only render if dynamically loaded */}
+      {OnboardingWizard && (
+        <OnboardingWizard
+          open={showOnboardingWizard}
+          onClose={() => setShowOnboardingWizard(false)}
+        />
+      )}
     </div>
   );
 };

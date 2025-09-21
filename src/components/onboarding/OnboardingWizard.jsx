@@ -3,6 +3,7 @@ import { Dialog } from '@headlessui/react';
 import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../hooks/useAuth';
+import GenerationProgressModal from '../generation/GenerationProgressModal';
 
 // Import step components (will create these next)
 import BasicInfoStep from './steps/BasicInfoStep';
@@ -12,9 +13,11 @@ import DietaryPreferencesStep from './steps/DietaryPreferencesStep';
 import ReviewStep from './steps/ReviewStep';
 
 export default function OnboardingWizard({ open, onClose }) {
-  const { userProfile } = useAuth();
+  const { user, userProfile } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
+  const [showGenerationModal, setShowGenerationModal] = useState(false);
+  const [completedUserProfile, setCompletedUserProfile] = useState(null);
 
   // Onboarding data state with smart defaults
   const [onboardingData, setOnboardingData] = useState({
@@ -66,7 +69,17 @@ export default function OnboardingWizard({ open, onClose }) {
   // Auto-save with debounce
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (Object.keys(onboardingData).some(key => onboardingData[key] !== null && onboardingData[key] !== '')) {
+      // Only save if user has entered meaningful data (not just defaults)
+      const hasUserData = onboardingData.age ||
+                         onboardingData.gender ||
+                         onboardingData.heightFeet ||
+                         onboardingData.heightCm ||
+                         onboardingData.weightLbs ||
+                         onboardingData.weightKg ||
+                         onboardingData.fitnessGoal ||
+                         onboardingData.activityLevel;
+
+      if (hasUserData) {
         console.log('💾 Auto-saving onboarding data to localStorage');
         localStorage.setItem('onboarding_draft', JSON.stringify({
           ...onboardingData,
@@ -227,8 +240,23 @@ export default function OnboardingWizard({ open, onClose }) {
                         isLoading={isLoading}
                         setIsLoading={setIsLoading}
                         onComplete={() => {
-                          console.log('🎊 Onboarding wizard completed, closing modal');
+                          console.log('🎊 Onboarding wizard completed, starting AI generation...');
+
+                          // Store the completed user profile for generation
+                          setCompletedUserProfile({
+                            ...userProfile,
+                            ...onboardingData,
+                            id: user?.uid, // Ensure we have the user ID
+                            onboardingCompleted: true
+                          });
+
+                          // Close onboarding modal first
                           handleClose();
+
+                          // Then open generation modal after brief delay
+                          setTimeout(() => {
+                            setShowGenerationModal(true);
+                          }, 300);
                         }}
                       />
                     )}
@@ -274,6 +302,23 @@ export default function OnboardingWizard({ open, onClose }) {
           </div>
         </Dialog>
       )}
+
+      {/* AI Generation Progress Modal */}
+      <GenerationProgressModal
+        isOpen={showGenerationModal}
+        onClose={() => setShowGenerationModal(false)}
+        onComplete={(results) => {
+          console.log('🎉 AI generation completed:', results);
+          setShowGenerationModal(false);
+
+          // Clear draft data since onboarding is complete
+          localStorage.removeItem('onboarding_draft');
+
+          // Close and let parent handle navigation to dashboard
+          onClose();
+        }}
+        userProfile={completedUserProfile}
+      />
     </AnimatePresence>
   );
 }

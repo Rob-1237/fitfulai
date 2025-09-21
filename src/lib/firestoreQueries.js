@@ -159,6 +159,11 @@ export const getGroceryListByDate = async (userId, weekStartDate) => {
 // AI Cache Queries
 export const getCachedResponse = async (promptHash, userContext) => {
   try {
+    if (!userContext?.userId) {
+      console.warn('⚠️ No userId provided for cache lookup');
+      return null;
+    }
+
     const cacheRef = collection(db, 'aiCache');
     const q = query(
       cacheRef,

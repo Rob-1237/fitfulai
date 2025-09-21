@@ -64,7 +64,7 @@ export default function ReviewStep({ data, updateData, isLoading, setIsLoading, 
 
   const metrics = calculateMetrics();
 
-  const handleComplete = async () => {
+  const handleCompleteOnboarding = async () => {
     setIsLoading(true);
     console.log('🎉 Starting onboarding completion process...');
 
@@ -137,15 +137,114 @@ export default function ReviewStep({ data, updateData, isLoading, setIsLoading, 
         // Clear draft data
         localStorage.removeItem('onboarding_draft');
 
-        // Show success for a moment before closing
-        await new Promise(resolve => setTimeout(resolve, 1000));
-
-        console.log('🎊 User should now see "onboarded" state across the app!');
+        console.log('🎊 Onboarding completed! User can now generate plans.');
         console.log('🔥 All Firestore collections created: profiles, workouts, meals, groceries, aiCache');
 
-        // Close the wizard modal
+        // DON'T close the wizard - let user stay on ReviewStep to click generate button
+      } else {
+        throw new Error(result.error);
+      }
+
+    } catch (error) {
+      console.error('❌ Error completing onboarding:', error);
+      console.error('❌ Full error details:', {
+        message: error.message,
+        stack: error.stack,
+        name: error.name
+      });
+      alert(`Sorry, there was an error completing your profile: ${error.message}. Please try again.`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGeneratePlans = async () => {
+    setIsLoading(true);
+    console.log('🚀 User clicked Generate Plans button!');
+
+    try {
+      // First complete the onboarding process (save to Firestore)
+      const finalMetrics = metrics || {};
+
+      // Prepare complete onboarding data for collection initialization
+      const completeOnboardingData = {
+        // Basic info
+        age: data.age,
+        gender: data.gender,
+        unitsPreference: data.unitsPreference,
+
+        // Physical characteristics
+        weightLbs: data.weightLbs,
+        weightKgs: data.weightKg,
+        heightInches: data.unitsPreference === 'imperial'
+          ? (data.heightFeet * 12 + data.heightInches)
+          : Math.round(data.heightCm / 2.54),
+        heightCentimeters: data.heightCm || Math.round((data.heightFeet * 12 + data.heightInches) * 2.54),
+
+        // Fitness & nutrition preferences
+        fitnessGoal: data.fitnessGoal,
+        activityLevel: data.activityLevel,
+        dietaryPreferences: data.dietaryPreferences || [],
+        allergies: data.allergies || [],
+
+        // Calculated metrics
+        bmr: finalMetrics.bmr,
+        tdee: finalMetrics.tdee,
+        calorieTarget: finalMetrics.calorieTarget,
+        macros: finalMetrics.macros,
+
+        // Additional preferences
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        preferences: {
+          workoutDays: ['monday', 'wednesday', 'friday'],
+          mealComplexity: 'intermediate',
+          budgetRange: 'medium'
+        },
+
+        // Mark onboarding as complete!
+        onboardingCompleted: true
+      };
+
+      // Get user data for collection initialization
+      const userData = {
+        email: user.email,
+        displayName: user.displayName
+      };
+
+      // Initialize all user collections
+      const result = await initializeUserCollections(user.uid, userData, completeOnboardingData);
+
+      if (result.success) {
+        console.log('✅ User collections initialized successfully!');
+
+        // Update local data with calculated metrics
+        updateData({
+          bmr: finalMetrics.bmr,
+          tdee: finalMetrics.tdee,
+          calorieTarget: finalMetrics.calorieTarget,
+          macros: finalMetrics.macros,
+          onboardingCompleted: true
+        });
+
+        // Clear draft data
+        localStorage.removeItem('onboarding_draft');
+
+        // Prepare user profile for AI generation
+        const completeUserProfile = {
+          ...data,
+          id: user?.uid,
+          bmr: finalMetrics.bmr,
+          tdee: finalMetrics.tdee,
+          calorieTarget: finalMetrics.calorieTarget,
+          macros: finalMetrics.macros,
+          onboardingCompleted: true
+        };
+
+        console.log('🎊 Onboarding completed! Starting AI generation...');
+
+        // Close the onboarding wizard and trigger AI generation
         if (onComplete) {
-          onComplete();
+          onComplete(completeUserProfile);
         }
       } else {
         throw new Error(result.error);
@@ -153,8 +252,7 @@ export default function ReviewStep({ data, updateData, isLoading, setIsLoading, 
 
     } catch (error) {
       console.error('❌ Error completing onboarding:', error);
-      alert('Sorry, there was an error completing your profile. Please try again.');
-    } finally {
+      alert(`Sorry, there was an error completing your profile: ${error.message}. Please try again.`);
       setIsLoading(false);
     }
   };
@@ -255,9 +353,9 @@ export default function ReviewStep({ data, updateData, isLoading, setIsLoading, 
         </motion.div>
       )}
 
-      {/* Complete Button */}
+      {/* Generate Plans Button */}
       <motion.button
-        onClick={handleComplete}
+        onClick={handleGeneratePlans}
         disabled={isLoading}
         className="w-full bg-green-600 text-white py-4 px-6 rounded-lg font-medium text-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
         whileHover={{ scale: isLoading ? 1 : 1.02 }}
