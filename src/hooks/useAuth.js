@@ -368,6 +368,7 @@ export const useAuth = () => {
     }
   };
 
+
   return {
     profile,
     userProfile,

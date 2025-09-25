@@ -25,9 +25,9 @@ if (import.meta.env.DEV) {
 }
 
 function App() {
-  console.log('🚀 APP COMPONENT MOUNTING');
+  // console.log('🚀 APP COMPONENT MOUNTING');
 
-  const { isInitialized } = useAuth();
+  const { isInitialized, userProfile } = useAuth();
   const { isDark, isMobile, setIsMobile, modals, closeModal } = useUIStore();
 
   console.log('🚀 App state:', {
@@ -57,12 +57,12 @@ function App() {
     );
   }
 
-  console.log('✅ App initialized, rendering main application');
+  // console.log('✅ App initialized, rendering main application');
 
   return (
     <ToastProvider>
         <div className={`min-h-screen ${isDark ? 'bg-[var(--color-black)]' : 'bg-[var(--color-white)]'} ${isMobile ? 'pb-20' : ''} pt-16`}>
-          <TopNavigation isDark={isDark} />
+          <TopNavigation isDark={isDark} isMobile={isMobile} onboarded={userProfile?.onboardingCompleted} />
 
           <Routes>
             <Route path="/" element={<Home isDark={isDark} />} />

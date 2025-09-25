@@ -4,19 +4,22 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faBasketShopping,
   faListCheck,
-  faDollarSign,
   faMapMarkerAlt,
   faCheck,
   faShoppingCart
 } from '@fortawesome/pro-duotone-svg-icons';
 import { getUserGroceryLists, getCurrentWeekData } from '../../lib/firestoreQueries';
 import { useAuth } from '../../hooks/useAuth';
+import { doc, updateDoc } from 'firebase/firestore';
+import { db } from '../../lib/firebase';
 
 export default function GroceriesContent({ isDark }) {
   const { user } = useAuth();
   const [groceryLists, setGroceryLists] = useState([]);
   const [currentWeekData, setCurrentWeekData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [checkedItems, setCheckedItems] = useState([]);
+  const [completedSections, setCompletedSections] = useState([]);
 
   useEffect(() => {
     const fetchGroceries = async () => {
@@ -40,6 +43,90 @@ export default function GroceriesContent({ isDark }) {
 
     fetchGroceries();
   }, [user?.uid]);
+
+  // Derive current grocery list
+  const currentGroceryList = currentWeekData?.groceryList || groceryLists[0];
+
+  // Load checked items from current grocery list
+  useEffect(() => {
+    if (currentGroceryList?.checkedItems) {
+      setCheckedItems(currentGroceryList.checkedItems);
+    }
+    if (currentGroceryList?.completedSections) {
+      setCompletedSections(currentGroceryList.completedSections);
+    }
+  }, [currentGroceryList]);
+
+  // Pantry tracking functions
+  const toggleItemChecked = async (itemName, sectionName) => {
+    const isChecked = checkedItems.includes(itemName);
+    let newCheckedItems;
+
+    if (isChecked) {
+      // Uncheck item
+      newCheckedItems = checkedItems.filter(item => item !== itemName);
+    } else {
+      // Check item
+      newCheckedItems = [...checkedItems, itemName];
+    }
+
+    setCheckedItems(newCheckedItems);
+
+    // Check if this completes/uncompletes the section
+    const sectionItems = groceryItems.find(section => section.section === sectionName)?.items || [];
+    const sectionItemNames = sectionItems.map(item => typeof item === 'string' ? item.split(' (')[0] : item.name);
+    const checkedSectionItems = newCheckedItems.filter(item =>
+      sectionItemNames.some(sectionItem => sectionItem.includes(item) || item.includes(sectionItem))
+    );
+
+    let newCompletedSections = [...completedSections];
+
+    if (checkedSectionItems.length === sectionItems.length && !isChecked) {
+      // Section just became complete
+      if (!newCompletedSections.includes(sectionName)) {
+        newCompletedSections.push(sectionName);
+      }
+    } else if (isChecked && newCompletedSections.includes(sectionName)) {
+      // Section is no longer complete
+      newCompletedSections = newCompletedSections.filter(section => section !== sectionName);
+    }
+
+    setCompletedSections(newCompletedSections);
+
+    // Save to Firestore
+    if (currentGroceryList?.id) {
+      try {
+        const groceryRef = doc(db, 'groceries', currentGroceryList.id);
+        await updateDoc(groceryRef, {
+          checkedItems: newCheckedItems,
+          completedSections: newCompletedSections,
+          updatedAt: new Date()
+        });
+      } catch (error) {
+        console.error('Error updating grocery list:', error);
+      }
+    }
+  };
+
+  // Calculate remaining cost (excluding checked items)
+  const calculateRemainingCost = () => {
+    if (!currentGroceryList?.sections) return currentGroceryList?.totalEstimatedCost || 0;
+
+    let totalCost = 0;
+    let remainingCost = 0;
+
+    Object.values(currentGroceryList.sections).forEach(section => {
+      section.items.forEach(item => {
+        totalCost += item.estimatedCost || 0;
+        const itemName = item.item.split(' (')[0]; // Remove quantity from name
+        if (!checkedItems.includes(itemName)) {
+          remainingCost += item.estimatedCost || 0;
+        }
+      });
+    });
+
+    return { totalCost, remainingCost };
+  };
 
   if (isLoading) {
     return (
@@ -69,17 +156,39 @@ export default function GroceriesContent({ isDark }) {
     );
   }
 
-  const currentGroceryList = currentWeekData?.groceryList || groceryLists[0];
   const isPlaceholder = currentGroceryList?.type === 'placeholder';
 
-  // Sample grocery data structure
+  // Sample grocery data structure (fallback)
   const sampleItems = [
     { section: 'Produce', items: ['Spinach (5oz bag)', 'Avocados (2 count)', 'Sweet potatoes (3 lbs)', 'Broccoli crowns (2 heads)'], color: 'green' },
     { section: 'Proteins', items: ['Chicken breast (2 lbs)', 'Salmon fillets (1 lb)', 'Greek yogurt (32oz)', 'Eggs (dozen)'], color: 'blue' },
     { section: 'Pantry', items: ['Rolled oats (32oz)', 'Olive oil (16oz)', 'Quinoa (2 lbs)', 'Almond butter (16oz)'], color: 'purple' }
   ];
 
-  const groceryItems = currentGroceryList?.items || sampleItems;
+  // Transform Call 3 data structure to UI format
+  const transformGroceryData = (groceryData) => {
+    if (!groceryData?.sections) return sampleItems;
+
+    const colorMap = {
+      produce: 'green',
+      proteins: 'blue',
+      dairy: 'blue',
+      pantry: 'purple',
+      frozen: 'purple'
+    };
+
+    return Object.entries(groceryData.sections).map(([key, section]) => ({
+      section: section.name,
+      items: section.items.map(item => `${item.item} (${item.quantity})`),
+      color: colorMap[key] || 'gray'
+    }));
+  };
+
+  const groceryItems = currentGroceryList?.sections ?
+    transformGroceryData(currentGroceryList) : sampleItems;
+
+  // Calculate costs
+  const { totalCost, remainingCost } = calculateRemainingCost();
 
   return (
     <div className="max-w-6xl mx-auto">
@@ -123,19 +232,29 @@ export default function GroceriesContent({ isDark }) {
                       </h4>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-2 ml-5">
-                      {(section.items || []).map((item, itemIndex) => (
-                        <div
-                          key={itemIndex}
-                          className={`flex items-center space-x-2 p-2 rounded ${isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-50'} cursor-pointer transition-colors`}
-                        >
-                          <button className={`w-5 h-5 border-2 rounded ${isDark ? 'border-gray-600 hover:border-green-500' : 'border-gray-300 hover:border-green-500'} flex items-center justify-center`}>
-                            <FontAwesomeIcon icon={faCheck} className="text-green-500 text-xs opacity-0 hover:opacity-100" />
-                          </button>
-                          <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
-                            {typeof item === 'string' ? item : item.name}
-                          </span>
-                        </div>
-                      ))}
+                      {(section.items || []).map((item, itemIndex) => {
+                        const itemName = typeof item === 'string' ? item.split(' (')[0] : item.name;
+                        const isChecked = checkedItems.includes(itemName);
+
+                        return (
+                          <div
+                            key={itemIndex}
+                            className={`flex items-center space-x-2 p-2 rounded ${isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-50'} cursor-pointer transition-colors`}
+                            onClick={() => toggleItemChecked(itemName, section.section)}
+                          >
+                            <button className={`w-5 h-5 border-2 rounded ${isDark ? 'border-gray-600 hover:border-green-500' : 'border-gray-300 hover:border-green-500'} flex items-center justify-center ${isChecked ? 'bg-green-500 border-green-500' : ''}`}>
+                              <FontAwesomeIcon
+                                icon={faCheck}
+                                className={`text-white text-xs ${isChecked ? 'opacity-100' : 'opacity-0'}`}
+                              />
+                            </button>
+                            <span className={`text-sm ${isChecked ? 'line-through opacity-50' : ''} ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                              {typeof item === 'string' ? item : item.name}
+                              {isChecked && <span className="ml-2 text-xs text-green-600">✓ In Pantry</span>}
+                            </span>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 ))}
@@ -163,12 +282,17 @@ export default function GroceriesContent({ isDark }) {
               </h4>
 
               <div className="space-y-4">
-                {/* Total Cost */}
+                {/* Remaining Cost */}
                 <div className="text-center p-4 rounded-lg bg-green-50">
                   <div className="text-2xl font-bold text-green-600">
-                    ${currentGroceryList?.estimatedTotal || '76.20'}
+                    ${remainingCost.toFixed(2)}
                   </div>
-                  <div className="text-xs text-green-600">Estimated Total</div>
+                  <div className="text-xs text-green-600">Remaining Cost</div>
+                  {totalCost > remainingCost && (
+                    <div className="text-xs text-gray-500 mt-1">
+                      ${(totalCost - remainingCost).toFixed(2)} saved (in pantry)
+                    </div>
+                  )}
                 </div>
 
                 {/* Budget Progress */}
@@ -178,13 +302,13 @@ export default function GroceriesContent({ isDark }) {
                       Weekly Budget
                     </span>
                     <span className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                      ${currentGroceryList?.estimatedTotal || '76'}/100
+                      ${Math.round(remainingCost)}/100
                     </span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2">
                     <div
                       className="bg-green-600 h-2 rounded-full"
-                      style={{ width: `${((currentGroceryList?.estimatedTotal || 76) / 100) * 100}%` }}
+                      style={{ width: `${Math.min((remainingCost / 100) * 100, 100)}%` }}
                     ></div>
                   </div>
                 </div>
@@ -245,17 +369,48 @@ export default function GroceriesContent({ isDark }) {
           Your list is organized by typical store layout for efficient shopping.
         </p>
         <div className="flex flex-wrap gap-3">
-          {groceryItems.map((section, index) => (
-            <div
-              key={index}
-              className={`flex items-center space-x-2 px-3 py-2 rounded-full border ${isDark ? 'border-gray-600 bg-gray-700' : 'border-gray-200 bg-gray-50'}`}
-            >
-              <div className={`w-2 h-2 rounded-full bg-${section.color}-500`}></div>
-              <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
-                {index + 1}. {section.section}
-              </span>
-            </div>
-          ))}
+          {groceryItems.map((section, index) => {
+            const isCompleted = completedSections.includes(section.section);
+
+            return (
+              <div
+                key={index}
+                className={`flex items-center space-x-2 px-3 py-2 rounded-full border cursor-pointer transition-all ${
+                  isCompleted
+                    ? 'border-green-500 bg-green-50 opacity-75'
+                    : isDark ? 'border-gray-600 bg-gray-700 hover:border-gray-500' : 'border-gray-200 bg-gray-50 hover:border-gray-300'
+                }`}
+                onClick={() => {
+                  // Allow manual section completion toggle
+                  const newCompletedSections = isCompleted
+                    ? completedSections.filter(s => s !== section.section)
+                    : [...completedSections, section.section];
+                  setCompletedSections(newCompletedSections);
+
+                  // Save to Firestore
+                  if (currentGroceryList?.id) {
+                    try {
+                      const groceryRef = doc(db, 'groceries', currentGroceryList.id);
+                      updateDoc(groceryRef, {
+                        completedSections: newCompletedSections,
+                        updatedAt: new Date()
+                      });
+                    } catch (error) {
+                      console.error('Error updating completed sections:', error);
+                    }
+                  }
+                }}
+              >
+                <div className={`w-2 h-2 rounded-full ${isCompleted ? 'bg-green-500' : `bg-${section.color}-500`}`}></div>
+                <span className={`text-sm ${isCompleted ? 'text-green-700 line-through' : isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+                  {index + 1}. {section.section}
+                </span>
+                {isCompleted && (
+                  <FontAwesomeIcon icon={faCheck} className="text-green-500 text-xs ml-1" />
+                )}
+              </div>
+            );
+          })}
         </div>
       </motion.div>
 

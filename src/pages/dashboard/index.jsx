@@ -33,14 +33,14 @@ function Dashboard({ isDark }) {
             {/* Hero Section */}
             <div className="text-center mb-16">
                 <h2 className={`text-4xl font-bold mb-6 ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                    Your Complete AI Fitness Assistant
+                    Your Complete Fitness Assistant
                 </h2>
                 <p className={`text-xl ${isDark ? 'text-gray-300' : 'text-gray-600'} max-w-3xl mx-auto mb-8`}>
-                    FitfulAI combines cutting-edge artificial intelligence with personalized fitness and nutrition science to create a comprehensive wellness platform tailored uniquely to you.
+                    Fitful combines personalized fitness and nutrition science to create a comprehensive wellness platform tailored uniquely to you.
                 </p>
-                <div className="flex justify-center">
+                {/* <div className="flex justify-center">
                     <FontAwesomeIcon icon={faRobot} className="text-6xl text-blue-500 mb-6" />
-                </div>
+                </div> */}
             </div>
 
             {/* Core Features Grid */}
@@ -55,7 +55,7 @@ function Dashboard({ isDark }) {
                         Smart Workouts
                     </h3>
                     <p className={`${isDark ? 'text-gray-300' : 'text-gray-600'} mb-4`}>
-                        AI-generated workout plans that adapt to your fitness level, goals, and schedule.
+                        Bi-weekly workout plans generated to adapt to your fitness level, goals, and schedule.
                     </p>
                     <div className={`text-sm ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
                         Personalized • Progressive • Flexible
@@ -72,7 +72,7 @@ function Dashboard({ isDark }) {
                         Nutrition Plans
                     </h3>
                     <p className={`${isDark ? 'text-gray-300' : 'text-gray-600'} mb-4`}>
-                        Meal plans and recipes tailored to your dietary preferences and macro targets.
+                        Meal plans and recipes tailored to your dietary preferences, allergies, and macro targets.
                     </p>
                     <div className={`text-sm ${isDark ? 'text-orange-400' : 'text-orange-600'}`}>
                         Macro-Focused • Diet-Friendly • Delicious
@@ -182,7 +182,7 @@ function Dashboard({ isDark }) {
             </div>
 
             {/* CTA Button */}
-            <div className="text-center">
+            {/* <div className="text-center">
                 <motion.button
                     className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-10 py-4 rounded-lg font-semibold text-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-300 shadow-lg"
                     whileHover={{ scale: 1.05 }}
@@ -190,7 +190,7 @@ function Dashboard({ isDark }) {
                 >
                     Start Your AI-Powered Fitness Journey
                 </motion.button>
-            </div>
+            </div> */}
         </div>
     );
 
@@ -203,7 +203,7 @@ function Dashboard({ isDark }) {
         >
             {/* Header Section */}
             <div className="p-8">
-                <div className="flex items-center space-x-4 mb-8">
+                {/* <div className="flex items-center space-x-4 mb-8">
                     <FontAwesomeIcon icon={faChartUser} className="text-purple-500 text-3xl" />
                     <div>
                         <h1 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-black'}`}>
@@ -213,14 +213,14 @@ function Dashboard({ isDark }) {
                             State: {userState}
                         </p>
                     </div>
-                </div>
+                </div> */}
 
                 {/* Centered State Message */}
-                <div className="text-center mb-12">
+                {/* <div className="text-center mb-12">
                     <h2 className={`text-xl font-medium ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>
                         {getMessage()}
                     </h2>
-                </div>
+                </div> */}
             </div>
 
             {/* Marketing Content - Only show for non-onboarded users */}

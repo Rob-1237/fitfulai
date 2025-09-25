@@ -20,7 +20,7 @@ const Home = ({ isDark }) => {
         animate={{ scale: 1 }}
         transition={{ delay: 0.2 }}
       >
-        Welcome to FitfulAI
+        Welcome to Fitful
       </motion.h1>
       <motion.p
         className={`${isDark ? 'text-[var(--color-lt-gray)]' : 'text-[var(--color-dk-gray)]'} text-center max-w-md mb-8`}
@@ -28,7 +28,7 @@ const Home = ({ isDark }) => {
         animate={{ opacity: 1 }}
         transition={{ delay: 0.4 }}
       >
-        Your AI-powered fitness and nutrition companion
+        Your fitness and nutrition companion
       </motion.p>
 
       <motion.div
@@ -45,12 +45,12 @@ const Home = ({ isDark }) => {
             </p>
           </div>
         )} */}
-        <p className={`${isDark ? 'text-[var(--color-lt-gray)]' : 'text-[var(--color-dk-gray)]'}`}>
+        {/* <p className={`${isDark ? 'text-[var(--color-lt-gray)]' : 'text-[var(--color-dk-gray)]'}`}>
           {user
             ? "Navigate using the menu to access your workouts, meals, and more."
             : "Use the top navigation to sign in and unlock your personalized fitness journey."
           }
-        </p>
+        </p> */}
       </motion.div>
     </motion.div>
   );

@@ -396,21 +396,6 @@ export default function MealsContent({ isDark }) {
                 </div>
               ))}
 
-              {/* Shopping List */}
-              {selectedMealPlan.shoppingList && (
-                <div className={`p-4 rounded-lg ${isDark ? 'bg-gray-700' : 'bg-gray-50'}`}>
-                  <h3 className={`text-lg font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                    Shopping List
-                  </h3>
-                  <div className="grid md:grid-cols-2 gap-2">
-                    {selectedMealPlan.shoppingList.map((item, index) => (
-                      <div key={index} className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
-                        • {item.quantity} {item.item}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
           </motion.div>
         </div>

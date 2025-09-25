@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
@@ -22,6 +23,8 @@ const GenerationProgressModal = ({ isOpen, onClose, onComplete, userProfile, isD
   const [isGenerating, setIsGenerating] = useState(false);
   const [overallProgress, setOverallProgress] = useState(0);
   const [generationResults, setGenerationResults] = useState(null);
+
+  const navigate = useNavigate();
 
   const steps = [
     {
@@ -75,7 +78,7 @@ const GenerationProgressModal = ({ isOpen, onClose, onComplete, userProfile, isD
       const result = await generateCompleteUserPlan(userProfile, handleProgress);
 
       setGenerationResults(result);
-
+      console.log("result check:", result);
       if (result.success) {
         console.log('🎉 All generations completed successfully');
         // Auto-close modal after a brief celebration
@@ -83,6 +86,9 @@ const GenerationProgressModal = ({ isOpen, onClose, onComplete, userProfile, isD
           onComplete(result);
           onClose();
         }, 2000);
+        setTimeout(() => {
+          navigate('/dashboard');
+        }, 2500);
       } else {
         console.log('⚠️ Some generations failed, showing results');
         // Show results but don't auto-close

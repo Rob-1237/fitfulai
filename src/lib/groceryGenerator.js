@@ -139,10 +139,9 @@ Based on the meal plan ingredients above, create an optimized shopping list.` : 
 REQUIREMENTS:
 1. Organize items by store sections for efficient shopping
 2. Include appropriate quantities for a week
-3. Consider dietary restrictions and allergies
-4. Suggest budget-friendly alternatives where appropriate
-5. Include staples and pantry items
-6. Consolidate duplicate items with total quantities
+3. Suggest budget-friendly alternatives where appropriate
+4. Include staples and pantry items
+5. Consolidate duplicate items with total quantities
 
 RESPONSE FORMAT:
 IMPORTANT: Return ONLY a valid JSON object with this exact structure. Do NOT include any text before or after the JSON. Ensure all strings are properly quoted and no trailing commas exist:

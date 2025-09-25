@@ -43,40 +43,30 @@ function Meals({ isDark }) {
     const SplashScreen = () => (
         <motion.div
             className="flex flex-col items-center justify-center py-24"
-            initial={{ opacity: 0, scale: 0.95 }}
+            initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 1.05 }}
-            transition={{ duration: 0.5 }}
+            transition={{ duration: 0.3 }}
         >
             {/* App Logo + Page Icon */}
-            <motion.div
+            <div
                 className="flex items-center space-x-4 mb-6"
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.2, duration: 0.5 }}
             >
                 <div className={`text-4xl ${isDark ? 'text-[var(--color-orange)]' : 'text-[var(--color-dk-gray)]'} font-bold`}>
                     FitfulAI
                 </div>
                 <FontAwesomeIcon icon={faPlateUtensils} className="text-orange-500 text-4xl" />
-            </motion.div>
+            </div>
 
             {/* Page Title */}
-            <motion.h1
+            <h1
                 className={`text-3xl font-bold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.2, duration: 0.5 }}
             >
                 Meals
-            </motion.h1>
+            </h1>
 
             {/* Loading Indicator */}
-            <motion.div
+            <div
                 className="flex items-center space-x-3"
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.4, duration: 0.5 }}
             >
                 <div className="flex space-x-1">
                     <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></div>
@@ -86,7 +76,7 @@ function Meals({ isDark }) {
                 <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
                     Preparing your personalized meal plans...
                 </span>
-            </motion.div>
+            </div>
         </motion.div>
     );
 
@@ -98,7 +88,7 @@ function Meals({ isDark }) {
                     See Your Personalized Meal Plans
                 </h2>
                 <p className={`text-lg ${isDark ? 'text-gray-300' : 'text-gray-600'} max-w-2xl mx-auto`}>
-                    AI-powered nutrition plans tailored to your dietary preferences, goals, and macro targets.
+                    Nutrition plans tailored to your dietary preferences, goals, and macro targets.
                 </p>
             </div>
 
@@ -232,7 +222,7 @@ function Meals({ isDark }) {
                         Smart Recipe Engine
                     </h3>
                     <ul className={`space-y-2 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
-                        <li>• AI-generated recipes based on preferences</li>
+                        <li>• Recipes based on preferences</li>
                         <li>• Ingredient substitutions for allergies</li>
                         <li>• Cooking time and difficulty ratings</li>
                         <li>• Nutritional breakdowns for every meal</li>
@@ -241,7 +231,7 @@ function Meals({ isDark }) {
             </div>
 
             {/* CTA Button */}
-            <div className="text-center">
+            {/* <div className="text-center">
                 <motion.button
                     className="bg-orange-600 text-white px-8 py-4 rounded-lg font-semibold text-lg hover:bg-orange-700 transition-colors"
                     whileHover={{ scale: 1.05 }}
@@ -249,15 +239,15 @@ function Meals({ isDark }) {
                 >
                     Get Started with Your Meal Plan
                 </motion.button>
-            </div>
+            </div> */}
         </div>
     );
 
     return (
         <motion.div
             className={`min-h-screen ${isDark ? 'bg-[var(--color-black)]' : 'bg-[var(--color-white)]'}`}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.3 }}
         >
             <AnimatePresence mode="wait">
@@ -268,13 +258,13 @@ function Meals({ isDark }) {
                 ) : (
                     <motion.div
                         key="content"
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.6 }}
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ duration: 0.3 }}
                     >
                         {/* Header Section */}
                         <div className="p-8">
-                            <motion.div
+                            {/* <motion.div
                                 className="flex items-center space-x-4 mb-8"
                                 initial={{ y: -20, opacity: 0 }}
                                 animate={{ y: 0, opacity: 1 }}
@@ -289,10 +279,10 @@ function Meals({ isDark }) {
                                         State: {userState}
                                     </p>
                                 </div>
-                            </motion.div>
+                            </motion.div> */}
 
                             {/* Centered State Message - Only show for non-onboarded users */}
-                            {userState !== "onboarded" && (
+                            {/* {userState !== "onboarded" && (
                                 <motion.div
                                     className="text-center mb-12"
                                     initial={{ y: 20, opacity: 0 }}
@@ -303,22 +293,19 @@ function Meals({ isDark }) {
                                         {getMessage()}
                                     </h2>
                                 </motion.div>
-                            )}
+                            )} */}
                         </div>
 
                         {/* Content based on user state */}
-                        <motion.div
+                        <div
                             className="px-8 pb-8"
-                            initial={{ y: 30, opacity: 0 }}
-                            animate={{ y: 0, opacity: 1 }}
-                            transition={{ delay: 0.4, duration: 0.6 }}
                         >
                             {userState === "onboarded" ? (
                                 <MealsContent isDark={isDark} />
                             ) : (
                                 <PreviewContent />
                             )}
-                        </motion.div>
+                        </div>
                     </motion.div>
                 )}
             </AnimatePresence>

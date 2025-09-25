@@ -15,10 +15,10 @@ import { useUIStore } from '../../stores/useUIStore';
 
 const navigationItems = [
   { path: '/', page: 'home', icon: faHome, label: 'Home' },
+  { path: '/dashboard', page: 'dashboard', icon: faChartUser, label: 'Dashboard' },
   { path: '/workouts', page: 'workouts', icon: faPersonRunning, label: 'Workouts' },
   { path: '/meals', page: 'meals', icon: faPlateUtensils, label: 'Meals' },
-  { path: '/groceries', page: 'groceries', icon: faBasketShopping, label: 'Groceries' },
-  { path: '/dashboard', page: 'dashboard', icon: faChartUser, label: 'Dashboard' }
+  { path: '/groceries', page: 'groceries', icon: faBasketShopping, label: 'Groceries' }
 ];
 
 const SidebarDrawer = () => {
@@ -81,7 +81,7 @@ const SidebarDrawer = () => {
     <>
       {/* Menu Toggle Button */}
       <motion.button
-        className={`fixed top-4 right-4 z-50 p-2 ${isDark ? 'bg-[var(--color-black)]' : 'bg-[var(--color-white)]'} rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200`}
+        className={`fixed top-3 right-4 z-50 p-1.75 ${isDark ? 'bg-[var(--color-black)]' : 'bg-[var(--color-white)]'} rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200`}
         onClick={toggleDrawer}
         whileHover={{ opacity: .8 }}
         whileTap={{ scale: 0.95 }}

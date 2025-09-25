@@ -13,10 +13,10 @@ import { useUIStore } from '../../stores/useUIStore';
 
 const navigationItems = [
   { path: '/', page: 'home', icon: faHome, label: 'Home' },
+  { path: '/dashboard', page: 'dashboard', icon: faChartUser, label: 'Dashboard' },
   { path: '/workouts', page: 'workouts', icon: faPersonRunning, label: 'Workouts' },
   { path: '/meals', page: 'meals', icon: faPlateUtensils, label: 'Meals' },
-  { path: '/groceries', page: 'groceries', icon: faBasketShopping, label: 'Groceries' },
-  { path: '/dashboard', page: 'dashboard', icon: faChartUser, label: 'Dashboard' }
+  { path: '/groceries', page: 'groceries', icon: faBasketShopping, label: 'Groceries' }
 ];
 
 const BottomTabBar = () => {
@@ -42,7 +42,7 @@ const BottomTabBar = () => {
 
   const TabButton = ({ item, isActive }) => (
     <motion.button
-      className={`flex flex-col items-center justify-center px-2 py-3 rounded-lg transition-colors duration-200 ${
+      className={`flex flex-col items-center justify-center px-2 py-3 rounded-lg transition-colors duration-200 w-20 ${
         isActive 
           ? isDark ? 'bg-[var(--color-yellow)] text-[var(--color-dk-gray)]' : 'bg-[var(--color-yellow)]' 
           : isDark ? 'text-[var(--color-md-gray)] hover:text-[var(--color-lt-gray)] hover:bg-[var(--color-md-gray)]' : 'text-gray-600 hover:text-[var(--color-dk-gray)] hover:bg-[var(--color-md-gray)]'
@@ -69,12 +69,12 @@ const BottomTabBar = () => {
       animate={{ y: 0 }}
       transition={{ type: "spring", stiffness: 300, damping: 30 }}
     >
-      <div className={`flex items-center justify-around ${isDark ? 'bg-[var(--color-black)]' : 'bg-[var(--color-white)]'} px-2 py-1 safe-area-bottom`}>
+      <div className={`flex items-center ${isDark ? 'bg-[var(--color-black)]' : 'bg-[var(--color-white)]'} px-2 py-1 safe-area-bottom`}>
         {navigationItems.map((item) => (
-          <div key={item.page} className="flex-1 relative">
-            <TabButton 
-              item={item} 
-              isActive={location.pathname === item.path} 
+          <div key={item.page} className="w-1/5 relative">
+            <TabButton
+              item={item}
+              isActive={location.pathname === item.path}
             />
           </div>
         ))}
