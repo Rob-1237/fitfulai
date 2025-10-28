@@ -24,14 +24,6 @@ Now Let's Continue the Discussion
 
   _____________
 
-  
-  1. Faster to MVP — Remove complexity, launch sooner
-  2. Clearer marketing — "Smart meal planning app" vs. "Another fitness app"
-  3. Better engagement — Weekly meal planning is more consistent than workout tracking
-  4. Unique differentiation — Store intelligence is genuinely novel
-  5. You're already questioning it — That's your intuition saying something's off
-
-  The workout feature makes it feel like "yet another fitness app." Without it, you have something more focused and potentially more useful.
 
   Start with:
   - Meal planning based on dietary preferences + budget
@@ -39,4 +31,18 @@ Now Let's Continue the Discussion
   - Simple manual store location notes ("Where did you find this?")
   - Add AI store intelligence later as differentiation grows
 
-  What's your gut telling you? And what initially drew you to include workouts in the first place?
+_______________
+
+"Critical Scope Answers:"
+
+  1. All 3 meals (breakfast, lunch, dinner) = 21 meals/week
+  
+  2. I like your recommendations, but we would need to gather Age, Height, Weight, etc. for each family member. Does that flow seem alright?
+
+  3. We can do a quick setup modal → Generate first plan → Show meal calendar. Then there could be an option to add more people later.
+  
+  4. When user clicks "Swap This Meal" on a recipe card, show modal with 3-5 AI alternative recipes, user picks one.
+
+  5. We should keep only ONE active meal plan per user (simpler)
+  
+I'm just trying to ensure we don't build an app that can only be useful to poeple who live alone and/or cook for one person. We should strongly consider getting rid of personal info like Age, weight, and height,, because then we can focus on servings, calories, prices, and ounces.

@@ -20,7 +20,7 @@ export const initializeUserCollections = async (userId, userData, onboardingData
 
   try {
     // Check if user already has collections initialized
-    const profileRef = doc(db, 'profiles', userId);
+    const profileRef = doc(db, 'users', userId);
     const profileDoc = await getDoc(profileRef);
 
     if (profileDoc.exists()) {
@@ -31,7 +31,6 @@ export const initializeUserCollections = async (userId, userData, onboardingData
     // Create all collections in parallel for performance
     await Promise.all([
       createUserProfile(userId, userData, onboardingData),
-      createWorkoutsCollection(userId),
       createMealsCollection(userId),
       createGroceriesCollection(userId),
       initializeAiCache(userId)
@@ -47,8 +46,8 @@ export const initializeUserCollections = async (userId, userData, onboardingData
 };
 
 /**
- * Create user profile document with all 28 required fields
- * Based on lines 43-78 from FIRESTORE_SETUP_GUIDE.md
+ * Create user profile document with simplified recipe-focused fields
+ * No body metrics - focuses on dietary needs and serving preferences
  */
 const createUserProfile = async (userId, userData, onboardingData) => {
   console.log('=� Creating profile document...');
@@ -58,46 +57,23 @@ const createUserProfile = async (userId, userData, onboardingData) => {
     email: userData.email || '',
     name: userData.displayName || userData.email?.split('@')[0] || 'User',
 
-    // Onboarding data (if provided, otherwise defaults)
-    age: onboardingData.age || null,
-    gender: onboardingData.gender || '',
-    activityLevel: onboardingData.activityLevel || '',
-    fitnessGoal: onboardingData.fitnessGoal || '',
-
-    // Physical measurements
-    heightCentimeters: onboardingData.heightCentimeters || null,
-    heightInches: onboardingData.heightInches || null,
-    weightKgs: onboardingData.weightKgs || null,
-    weightLbs: onboardingData.weightLbs || null,
-
-    // Dietary preferences
-    dietaryPreferences: onboardingData.dietaryPreferences || [],
-    allergies: onboardingData.allergies || [],
-
-    // Calculated metrics (will be computed during onboarding)
-    bmr: onboardingData.bmr || null,
-    tdee: onboardingData.tdee || null,
-    calorieTarget: onboardingData.calorieTarget || null,
-    macros: onboardingData.macros || {
-      protein: null,
-      carbs: null,
-      fat: null
-    },
+    // Recipe and dietary preferences (simplified - no body metrics)
+    dietaryRestrictions: onboardingData.dietaryRestrictions || [], // e.g., ['vegetarian', 'gluten-free', 'keto']
+    allergies: onboardingData.allergies || [], // e.g., ['peanuts', 'shellfish', 'dairy']
+    defaultServingSize: onboardingData.defaultServingSize || 4, // Number of servings per recipe
 
     // Subscription and usage tracking
     tier: 'pro', // Start as Pro tier for testing
     subscriptionStatus: 'active',
-    subscriptionEndDate: null, // timestamp type, null value
+    subscriptionEndDate: null,
     aiGenerationsUsed: 0,
     aiGenerationsReset: serverTimestamp(),
 
-    // User preferences (new fields)
-    unitsPreference: onboardingData.unitsPreference || 'imperial',
-    timezone: onboardingData.timezone || 'America/New_York',
+    // User preferences
     preferences: {
-      workoutDays: onboardingData.workoutDays || ['monday', 'wednesday', 'friday'],
-      mealComplexity: 'intermediate',
-      budgetRange: 'medium'
+      mealComplexity: onboardingData.mealComplexity || 'intermediate',
+      cuisinePreferences: onboardingData.cuisinePreferences || [], // e.g., ['italian', 'mexican', 'asian']
+      budgetRange: onboardingData.budgetRange || 'medium'
     },
 
     // Status tracking
@@ -109,85 +85,11 @@ const createUserProfile = async (userId, userData, onboardingData) => {
     updatedAt: serverTimestamp()
   };
 
-  const profileRef = doc(db, 'profiles', userId);
+  const profileRef = doc(db, 'users', userId);
   await setDoc(profileRef, profileData);
   console.log(' Profile document created');
 };
 
-/**
- * Create workouts collection structure for Pro tier
- * Based on lines 84-192 evaluation - complex structure for Pro tier
- */
-const createWorkoutsCollection = async (userId) => {
-  console.log('=� Creating workouts collection structure...');
-
-  // Create a placeholder workout document to establish schema
-  const placeholderWorkout = {
-    id: `${userId}_workout_placeholder`,
-    userId: userId,
-    type: 'placeholder',
-    name: 'Placeholder Workout',
-    description: 'Initial placeholder - will be replaced by AI-generated workouts',
-
-    // AI generation metadata
-    generatedAt: serverTimestamp(),
-    generatedBy: 'system',
-    aiPrompt: null,
-
-    // Pro-tier complex structure (from lines 84-192)
-    weeks: [
-      {
-        weekNumber: 1,
-        days: [
-          {
-            dayNumber: 1,
-            dayName: 'monday',
-            restDay: false,
-            exercises: [
-              {
-                name: 'Sample Exercise',
-                category: 'strength',
-                muscleGroups: ['chest'],
-                sets: 3,
-                reps: '10-12',
-                duration: null,
-                restBetweenSets: '60s',
-                instructions: 'Sample instructions',
-                videoUrl: '',
-                equipment: ['bodyweight'],
-                difficulty: 'beginner'
-              }
-            ]
-          }
-        ]
-      }
-    ],
-
-    // User progress tracking
-    progress: {
-      completedWorkouts: 0,
-      totalWorkouts: 1,
-      weeklyStreak: 0,
-      lastWorkoutDate: null
-    },
-
-    // Metadata
-    difficulty: 'beginner',
-    estimatedDuration: '30min',
-    equipment: ['bodyweight'],
-    tags: ['placeholder'],
-
-    // Status
-    isActive: false, // Placeholder is not active
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp()
-  };
-
-  // Use auto-generated document ID
-  const workoutRef = doc(collection(db, 'workouts'));
-  await setDoc(workoutRef, placeholderWorkout);
-  console.log(' Workouts collection initialized with placeholder');
-};
 
 /**
  * Create meals collection structure
@@ -432,7 +334,7 @@ const initializeAiCache = async (userId) => {
  */
 export const userCollectionsExist = async (userId) => {
   try {
-    const profileRef = doc(db, 'profiles', userId);
+    const profileRef = doc(db, 'users', userId);
     const profileDoc = await getDoc(profileRef);
     return profileDoc.exists();
   } catch (error) {

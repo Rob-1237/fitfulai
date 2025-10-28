@@ -4,7 +4,6 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faHome,
-  faPersonRunning,
   faPlateUtensils,
   faBasketShopping,
   faChartUser
@@ -14,7 +13,6 @@ import { useUIStore } from '../../stores/useUIStore';
 const navigationItems = [
   { path: '/', page: 'home', icon: faHome, label: 'Home' },
   { path: '/dashboard', page: 'dashboard', icon: faChartUser, label: 'Dashboard' },
-  { path: '/workouts', page: 'workouts', icon: faPersonRunning, label: 'Workouts' },
   { path: '/meals', page: 'meals', icon: faPlateUtensils, label: 'Meals' },
   { path: '/groceries', page: 'groceries', icon: faBasketShopping, label: 'Groceries' }
 ];

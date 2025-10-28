@@ -11,57 +11,6 @@ import {
 } from 'firebase/firestore';
 import { db } from './firebase';
 
-// Workout Queries
-export const getUserWorkouts = async (userId, options = {}) => {
-  try {
-    const workoutsRef = collection(db, 'workouts');
-    const q = query(
-      workoutsRef,
-      where('userId', '==', userId)
-    );
-
-    // Force server fetch to bypass cache (fixes refetch issue after generation)
-    const querySnapshot = options.bypassCache
-      ? await getDocsFromServer(q)
-      : await getDocs(q);
-
-    const workouts = [];
-
-    querySnapshot.forEach((doc) => {
-      workouts.push({ id: doc.id, ...doc.data() });
-    });
-
-    // Sort in memory instead of using Firestore orderBy to avoid index requirements
-    workouts.sort((a, b) => {
-      const aTime = a.generatedAt?.toDate?.() || new Date(0);
-      const bTime = b.generatedAt?.toDate?.() || new Date(0);
-      return bTime - aTime; // desc order
-    });
-
-    console.log(`📊 Found ${workouts.length} workouts for user ${userId}${options.bypassCache ? ' (from server)' : ''}`);
-    return workouts;
-  } catch (error) {
-    console.error('❌ Error fetching user workouts:', error);
-    return [];
-  }
-};
-
-export const getWorkoutById = async (workoutId) => {
-  try {
-    const workoutRef = doc(db, 'workouts', workoutId);
-    const workoutSnap = await getDoc(workoutRef);
-
-    if (workoutSnap.exists()) {
-      return { id: workoutSnap.id, ...workoutSnap.data() };
-    } else {
-      console.warn(`⚠️ Workout ${workoutId} not found`);
-      return null;
-    }
-  } catch (error) {
-    console.error('❌ Error fetching workout:', error);
-    return null;
-  }
-};
 
 // Meal Queries
 export const getUserMealPlans = async (userId, options = {}) => {

@@ -9,20 +9,11 @@ import AuthModal from "./components/auth/AuthModal";
 
 // Import pages
 import Home from "./pages/home/index.jsx";
-import Workouts from "./pages/workouts/index.jsx";
 import Meals from "./pages/meals/index.jsx";
 import Groceries from "./pages/groceries/index.jsx";
 import Dashboard from "./pages/dashboard/index.jsx";
 
 import "./styles/App.css";
-
-// Import test functions for development
-import { testFullWorkoutFlow } from "./lib/testFullWorkoutFlow.js";
-
-// Make test function available in browser console for development
-if (import.meta.env.DEV) {
-  window.testFullWorkoutFlow = testFullWorkoutFlow;
-}
 
 function App() {
   // console.log('🚀 APP COMPONENT MOUNTING');
@@ -66,7 +57,6 @@ function App() {
 
           <Routes>
             <Route path="/" element={<Home isDark={isDark} />} />
-            <Route path="/workouts" element={<Workouts isDark={isDark} />} />
             <Route path="/meals" element={<Meals isDark={isDark} />} />
             <Route path="/groceries" element={<Groceries isDark={isDark} />} />
             <Route path="/dashboard" element={<Dashboard isDark={isDark} />} />
