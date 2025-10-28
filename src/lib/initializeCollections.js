@@ -3,7 +3,8 @@ import {
   doc,
   setDoc,
   serverTimestamp,
-  getDoc
+  getDoc,
+  Timestamp
 } from 'firebase/firestore';
 import { db } from './firebase';
 
@@ -410,7 +411,7 @@ const initializeAiCache = async (userId) => {
     requestType: 'workout', // 'workout', 'meal', 'grocery'
     tokensUsed: 1250,
     cost: 0.025,
-    expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days from now
+    expiresAt: Timestamp.fromMillis(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days from now
     hitCount: 0, // How many times this cache has been used
 
     // Metadata

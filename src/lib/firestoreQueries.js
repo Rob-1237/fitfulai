@@ -6,12 +6,13 @@ import {
   doc,
   getDoc,
   orderBy,
-  limit
+  limit,
+  getDocsFromServer
 } from 'firebase/firestore';
 import { db } from './firebase';
 
 // Workout Queries
-export const getUserWorkouts = async (userId) => {
+export const getUserWorkouts = async (userId, options = {}) => {
   try {
     const workoutsRef = collection(db, 'workouts');
     const q = query(
@@ -19,7 +20,11 @@ export const getUserWorkouts = async (userId) => {
       where('userId', '==', userId)
     );
 
-    const querySnapshot = await getDocs(q);
+    // Force server fetch to bypass cache (fixes refetch issue after generation)
+    const querySnapshot = options.bypassCache
+      ? await getDocsFromServer(q)
+      : await getDocs(q);
+
     const workouts = [];
 
     querySnapshot.forEach((doc) => {
@@ -33,7 +38,7 @@ export const getUserWorkouts = async (userId) => {
       return bTime - aTime; // desc order
     });
 
-    console.log(`📊 Found ${workouts.length} workouts for user ${userId}`);
+    console.log(`📊 Found ${workouts.length} workouts for user ${userId}${options.bypassCache ? ' (from server)' : ''}`);
     return workouts;
   } catch (error) {
     console.error('❌ Error fetching user workouts:', error);
@@ -59,7 +64,7 @@ export const getWorkoutById = async (workoutId) => {
 };
 
 // Meal Queries
-export const getUserMealPlans = async (userId) => {
+export const getUserMealPlans = async (userId, options = {}) => {
   try {
     const mealsRef = collection(db, 'meals');
     const q = query(
@@ -67,7 +72,11 @@ export const getUserMealPlans = async (userId) => {
       where('userId', '==', userId)
     );
 
-    const querySnapshot = await getDocs(q);
+    // Force server fetch to bypass cache (fixes refetch issue after generation)
+    const querySnapshot = options.bypassCache
+      ? await getDocsFromServer(q)
+      : await getDocs(q);
+
     const mealPlans = [];
 
     querySnapshot.forEach((doc) => {
@@ -81,7 +90,7 @@ export const getUserMealPlans = async (userId) => {
       return bTime - aTime; // desc order
     });
 
-    console.log(`🍽️ Found ${mealPlans.length} meal plans for user ${userId}`);
+    console.log(`🍽️ Found ${mealPlans.length} meal plans for user ${userId}${options.bypassCache ? ' (from server)' : ''}`);
     return mealPlans;
   } catch (error) {
     console.error('❌ Error fetching user meal plans:', error);
@@ -108,7 +117,7 @@ export const getMealPlanByDate = async (userId, weekStartDate) => {
 };
 
 // Grocery Queries
-export const getUserGroceryLists = async (userId) => {
+export const getUserGroceryLists = async (userId, options = {}) => {
   try {
     const groceriesRef = collection(db, 'groceries');
     const q = query(
@@ -116,7 +125,11 @@ export const getUserGroceryLists = async (userId) => {
       where('userId', '==', userId)
     );
 
-    const querySnapshot = await getDocs(q);
+    // Force server fetch to bypass cache (fixes refetch issue after generation)
+    const querySnapshot = options.bypassCache
+      ? await getDocsFromServer(q)
+      : await getDocs(q);
+
     const groceryLists = [];
 
     querySnapshot.forEach((doc) => {
@@ -130,7 +143,7 @@ export const getUserGroceryLists = async (userId) => {
       return bTime - aTime; // desc order
     });
 
-    console.log(`🛒 Found ${groceryLists.length} grocery lists for user ${userId}`);
+    console.log(`🛒 Found ${groceryLists.length} grocery lists for user ${userId}${options.bypassCache ? ' (from server)' : ''}`);
     return groceryLists;
   } catch (error) {
     console.error('❌ Error fetching user grocery lists:', error);

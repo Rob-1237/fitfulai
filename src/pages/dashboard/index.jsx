@@ -1,10 +1,17 @@
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faChartUser, faRobot, faPersonRunning, faPlateUtensils, faBasketShopping, faBrain } from "@fortawesome/pro-duotone-svg-icons";
+import { faChartUser, faRobot, faPersonRunning, faPlateUtensils, faBasketShopping, faBrain, faClock } from "@fortawesome/pro-duotone-svg-icons";
 import { useAuth } from "../../hooks/useAuth";
+import { getUserWorkouts, getUserMealPlans, getUserGroceryLists } from "../../lib/firestoreQueries";
+import ProfileEditor from "../../components/dashboard/ProfileEditor";
+import GenerationProgressModal from "../../components/generation/GenerationProgressModal";
 
 function Dashboard({ isDark }) {
-    const { user, userProfile } = useAuth();
+    const { user, userProfile, refreshUserProfile } = useAuth();
+    const [showRegenerateModal, setShowRegenerateModal] = useState(false);
+    const [lastGeneratedDate, setLastGeneratedDate] = useState(null);
+    const [hasGeneratedPlans, setHasGeneratedPlans] = useState(false);
 
     // Single state logic
     const userState = user && userProfile?.onboardingCompleted ? "onboarded" : user ? "logged" : "unlogged";
@@ -14,6 +21,46 @@ function Dashboard({ isDark }) {
         hasProfile: !!userProfile,
         onboardingCompleted: userProfile?.onboardingCompleted
     });
+
+    // Fetch last generation date when user is onboarded
+    useEffect(() => {
+        const fetchLastGenerationDate = async () => {
+            if (!user?.uid || userState !== "onboarded") return;
+
+            try {
+                // Fetch all three plan types
+                const [workouts, meals, groceries] = await Promise.all([
+                    getUserWorkouts(user.uid),
+                    getUserMealPlans(user.uid),
+                    getUserGroceryLists(user.uid)
+                ]);
+
+                // Check if any plans exist
+                const hasPlans = workouts.length > 0 || meals.length > 0 || groceries.length > 0;
+                setHasGeneratedPlans(hasPlans);
+
+                // Find the most recent generation date across all plan types
+                const allDates = [
+                    ...workouts.map(w => w.generatedAt),
+                    ...meals.map(m => m.generatedAt),
+                    ...groceries.map(g => g.generatedAt)
+                ].filter(date => date); // Remove nulls
+
+                if (allDates.length > 0) {
+                    // Convert Firestore timestamps to JS dates and find the latest
+                    const latestDate = allDates
+                        .map(timestamp => timestamp.toDate ? timestamp.toDate() : new Date(timestamp))
+                        .sort((a, b) => b - a)[0];
+
+                    setLastGeneratedDate(latestDate);
+                }
+            } catch (error) {
+                console.error('Error fetching last generation date:', error);
+            }
+        };
+
+        fetchLastGenerationDate();
+    }, [user, userState]);
 
     const getMessage = () => {
         switch (userState) {
@@ -228,6 +275,93 @@ function Dashboard({ isDark }) {
                 <div className="px-8 pb-8">
                     <PreviewContent />
                 </div>
+            )}
+
+            {/* Profile Editor - Only show for onboarded users with generated plans */}
+            {userState === "onboarded" && hasGeneratedPlans && (
+                <div className="px-8 pb-8">
+                    {/* Last Generated Banner */}
+                    {lastGeneratedDate && (
+                        <motion.div
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className={`mb-6 p-4 rounded-xl border ${
+                                isDark
+                                    ? 'bg-gray-800 border-gray-700'
+                                    : 'bg-blue-50 border-blue-200'
+                            } flex items-center justify-between`}
+                        >
+                            <div className="flex items-center gap-3">
+                                <FontAwesomeIcon
+                                    icon={faClock}
+                                    className="text-blue-500 text-xl"
+                                />
+                                <div>
+                                    <p className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                                        Last Plan Generation
+                                    </p>
+                                    <p className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                                        {lastGeneratedDate.toLocaleDateString('en-US', {
+                                            month: 'long',
+                                            day: 'numeric',
+                                            year: 'numeric',
+                                            hour: 'numeric',
+                                            minute: '2-digit'
+                                        })}
+                                    </p>
+                                </div>
+                            </div>
+                            <div className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                                {Math.floor((new Date() - lastGeneratedDate) / (1000 * 60 * 60 * 24))} days ago
+                            </div>
+                        </motion.div>
+                    )}
+
+                    {/* Profile Editor Component */}
+                    <ProfileEditor
+                        isDark={isDark}
+                        onRegenerateClick={() => {
+                            console.log('🔄 Dashboard: Regenerate clicked! Current userProfile:', userProfile);
+                            setShowRegenerateModal(true);
+                        }}
+                    />
+                </div>
+            )}
+
+            {/* Regenerate Plans Modal */}
+            {showRegenerateModal && (
+                <GenerationProgressModal
+                    isOpen={showRegenerateModal}
+                    onClose={() => setShowRegenerateModal(false)}
+                    onComplete={async (results) => {
+                        console.log('🎉 Plan regeneration completed:', results);
+                        setShowRegenerateModal(false);
+
+                        // Refresh user profile and regeneration date
+                        await refreshUserProfile();
+
+                        // Refetch last generation date
+                        const [workouts, meals, groceries] = await Promise.all([
+                            getUserWorkouts(user.uid),
+                            getUserMealPlans(user.uid),
+                            getUserGroceryLists(user.uid)
+                        ]);
+
+                        const allDates = [
+                            ...workouts.map(w => w.generatedAt),
+                            ...meals.map(m => m.generatedAt),
+                            ...groceries.map(g => g.generatedAt)
+                        ].filter(date => date);
+
+                        if (allDates.length > 0) {
+                            const latestDate = allDates
+                                .map(timestamp => timestamp.toDate ? timestamp.toDate() : new Date(timestamp))
+                                .sort((a, b) => b - a)[0];
+                            setLastGeneratedDate(latestDate);
+                        }
+                    }}
+                    userProfile={userProfile}
+                />
             )}
         </motion.div>
     );

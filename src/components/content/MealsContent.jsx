@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
@@ -14,6 +15,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../ui/ToastProvider';
 
 export default function MealsContent({ isDark }) {
+  const location = useLocation();
   const { user, userProfile } = useAuth();
   const { addToast } = useToast();
   const [mealPlans, setMealPlans] = useState([]);
@@ -40,13 +42,19 @@ export default function MealsContent({ isDark }) {
     const fetchMeals = async () => {
       if (!user?.uid) return;
 
+      console.log('🍽️ MealsContent: Refetch triggered - Starting fetch for user:', user.uid, {
+        pathname: location.pathname,
+        locationKey: location.key
+      });
       setIsLoading(true);
       try {
+        // Bypass cache to get fresh data after generation
         const [userMealPlans, weekData] = await Promise.all([
-          getUserMealPlans(user.uid),
+          getUserMealPlans(user.uid, { bypassCache: true }),
           getCurrentWeekData(user.uid)
         ]);
 
+        console.log('🍽️ MealsContent: Received meal plans:', userMealPlans);
         setMealPlans(userMealPlans);
         setCurrentWeekData(weekData);
       } catch (error) {
@@ -57,7 +65,7 @@ export default function MealsContent({ isDark }) {
     };
 
     fetchMeals();
-  }, [user?.uid]);
+  }, [user?.uid, location.pathname, location.key]);
 
 
   if (isLoading) {
@@ -221,15 +229,6 @@ export default function MealsContent({ isDark }) {
                   </div>
                 </div>
               </div>
-
-              <motion.button
-                className="w-full mt-6 bg-orange-600 text-white py-3 rounded-lg font-medium hover:bg-orange-700 transition-colors flex items-center justify-center space-x-2"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <FontAwesomeIcon icon={faUtensils} />
-                <span>{isPlaceholder ? 'Preview Recipes' : 'View All Recipes'}</span>
-              </motion.button>
             </motion.div>
 
             {/* Macro Targets Card */}

@@ -6,7 +6,8 @@ import {
   setDoc,
   updateDoc,
   serverTimestamp,
-  addDoc
+  addDoc,
+  Timestamp
 } from 'firebase/firestore';
 import { db } from './firebase';
 
@@ -31,7 +32,9 @@ export const generateWorkout = async (userProfile, workoutType = 'weekly') => {
       workoutType
     };
 
+    console.log('🏋️ WorkoutGenerator: promptContext for hashing:', promptContext);
     const promptHash = btoa(JSON.stringify(promptContext)).slice(0, 32);
+    console.log('🏋️ WorkoutGenerator: Generated promptHash:', promptHash);
 
     // Check cache first
     console.log('🔍 Checking AI cache for existing workout...');
@@ -45,14 +48,29 @@ export const generateWorkout = async (userProfile, workoutType = 'weekly') => {
     }
 
     if (cachedResponse) {
-      console.log(' Found cached workout, using existing data');
+      console.log('✅ 🏋️ CACHE HIT! Using cached workout data');
+      console.log('🏋️ Cached workout ID:', cachedResponse.id);
+
+      // Even though we're using cached data, save a NEW Firestore document
+      // This ensures the latest generation shows up on the Workouts page
+      console.log('💾 🏋️ Saving cached workout as new Firestore document...');
+      const processedWorkout = await saveWorkoutToFirestore(userId, cachedResponse.response, {
+        promptTokens: 0,
+        completionTokens: 0,
+        totalTokens: 0,
+        cost: 0,
+        model: 'cached'
+      });
+      console.log('✅ 🏋️ Cached workout saved as new document');
+
       return {
         success: true,
-        data: cachedResponse.response,
+        data: processedWorkout,
         cached: true,
         source: 'cache'
       };
     }
+    console.log('❌ 🏋️ CACHE MISS! Generating new workout with OpenAI...');
 
     // Build comprehensive AI prompt
     const prompt = buildWorkoutPrompt(userProfile, workoutType);
@@ -231,6 +249,7 @@ const saveWorkoutToFirestore = async (userId, workoutData, usage) => {
     // Save to Firestore
     const workoutRef = doc(db, 'workouts', workoutId);
     await setDoc(workoutRef, workoutDoc);
+    console.log('✅ 🏋️ Workout saved to Firestore with ID:', workoutId);
 
     // Remove placeholder workout if it exists
     await removeWorkoutPlaceholder(userId);
@@ -275,14 +294,14 @@ const cacheAIResponse = async (promptHash, userContext, aiResponse) => {
       requestType: 'workout',
       response: aiResponse.data,
 
-      // Usage tracking
-      tokensUsed: aiResponse.usage.totalTokens,
-      cost: aiResponse.usage.cost,
-      model: aiResponse.usage.model,
+      // Usage tracking (with defaults to prevent undefined)
+      tokensUsed: aiResponse.usage?.totalTokens || 0,
+      cost: aiResponse.usage?.cost || 0,
+      model: aiResponse.usage?.model || 'unknown',
 
       // Cache management
       createdAt: serverTimestamp(),
-      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+      expiresAt: Timestamp.fromMillis(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
       hitCount: 0
     };
 

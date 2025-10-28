@@ -4,10 +4,12 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUser, faSignIn, faSignOut, faCog } from '@fortawesome/pro-duotone-svg-icons';
 import { useAuth } from '../../hooks/useAuth';
 import { useUIStore } from '../../stores/useUIStore';
+import SettingsModal from '../modals/SettingsModal';
+import EditAccountModal from '../modals/EditAccountModal';
 
 const TopNavigation = ({ isDark, isMobile, onboarded }) => {
   const { user, userProfile, signOut } = useAuth();
-  const { openModal } = useUIStore();
+  const { openModal, closeModal, modals } = useUIStore();
   const [showOnboardingWizard, setShowOnboardingWizard] = useState(false);
   const [OnboardingWizard, setOnboardingWizard] = useState(null);
 
@@ -114,14 +116,37 @@ const TopNavigation = ({ isDark, isMobile, onboarded }) => {
           onClose={() => setShowOnboardingWizard(false)}
         />
       )}
+
+      {/* Settings Modal */}
+      <SettingsModal
+        open={modals.settings}
+        onClose={() => closeModal('settings')}
+      />
+
+      {/* Edit Account Modal */}
+      <EditAccountModal
+        open={modals.editAccount}
+        onClose={() => closeModal('editAccount')}
+        isDark={isDark}
+      />
     </div>
   );
 };
 
 const UserProfileCircle = ({ isDark, onSignOut }) => {
   const { user, userProfile } = useAuth();
+  const { openModal } = useUIStore();
   const userName = userProfile?.name || user?.displayName || user?.email?.split('@')[0] || 'User';
   const userInitials = userName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+
+  // Debug logging to track re-renders with updated profile
+  useEffect(() => {
+    console.log('👤 UserProfileCircle: Profile updated', {
+      userName,
+      userInitials,
+      profileName: userProfile?.name
+    });
+  }, [userProfile?.name, userName, userInitials]);
 
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
@@ -160,8 +185,14 @@ const UserProfileCircle = ({ isDark, onSignOut }) => {
     onSignOut();
   };
 
-  const handleMenuItemClick = () => {
+  const handleEditAccountClick = () => {
     setIsDropdownOpen(false);
+    openModal('editAccount');
+  };
+
+  const handleSettingsClick = () => {
+    setIsDropdownOpen(false);
+    openModal('settings');
   };
 
   const handleKeyDown = (event) => {
@@ -198,7 +229,7 @@ const UserProfileCircle = ({ isDark, onSignOut }) => {
 
         <div className="py-1">
           <button
-            onClick={handleMenuItemClick}
+            onClick={handleEditAccountClick}
             className={`w-full px-3 py-2 text-left text-sm ${isDark ? 'text-gray-300 hover:bg-[var(--color-dk-gray)]' : 'text-gray-700 hover:bg-gray-100'} transition-colors flex items-center space-x-2`}
           >
             <FontAwesomeIcon icon={faUser} className="w-4 h-4" />
@@ -206,7 +237,7 @@ const UserProfileCircle = ({ isDark, onSignOut }) => {
           </button>
 
           <button
-            onClick={handleMenuItemClick}
+            onClick={handleSettingsClick}
             className={`w-full px-3 py-2 text-left text-sm ${isDark ? 'text-gray-300 hover:bg-[var(--color-dk-gray)]' : 'text-gray-700 hover:bg-gray-100'} transition-colors flex items-center space-x-2`}
           >
             <FontAwesomeIcon icon={faCog} className="w-4 h-4" />

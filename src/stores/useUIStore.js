@@ -24,6 +24,7 @@ export const useUIStore = create((set, get) => ({
     auth: false,
     profile: false,
     settings: false,
+    editAccount: false,
   },
 
   openModal: (modalName) =>

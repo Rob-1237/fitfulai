@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
@@ -6,29 +7,60 @@ import {
   faStopwatch,
   faBullseyeArrow,
   faPersonRunning,
-  faCalendarWeek,
-  faPlay
+  faCalendarWeek
 } from '@fortawesome/pro-duotone-svg-icons';
 import { getUserWorkouts } from '../../lib/firestoreQueries';
 import { useAuth } from '../../hooks/useAuth';
 
 export default function WorkoutsContent({ isDark }) {
+  const location = useLocation();
   const { user, userProfile } = useAuth();
   const [workouts, setWorkouts] = useState([]);
   const [currentWorkout, setCurrentWorkout] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Component mount/unmount logging
   useEffect(() => {
+    console.log('🏋️ WorkoutsContent: Component MOUNTED', {
+      userUid: user?.uid,
+      userEmail: user?.email,
+      hasUserProfile: !!userProfile,
+      userProfileKeys: userProfile ? Object.keys(userProfile) : [],
+      pathname: location.pathname,
+      locationKey: location.key
+    });
+
+    return () => {
+      console.log('🏋️ WorkoutsContent: Component UNMOUNTED');
+    };
+  }, []);
+
+  useEffect(() => {
+    console.log('🏋️ WorkoutsContent: useEffect TRIGGERED', {
+      userUid: user?.uid,
+      pathname: location.pathname,
+      locationKey: location.key,
+      willFetch: !!user?.uid
+    });
+
     const fetchWorkouts = async () => {
       if (!user?.uid) {
-        console.log('🔍 WorkoutsContent: No user ID, skipping fetch');
+        console.log('🔍 WorkoutsContent: No user ID, skipping fetch', {
+          user,
+          hasUser: !!user,
+          uid: user?.uid
+        });
         return;
       }
 
-      console.log('🔍 WorkoutsContent: Starting fetch for user:', user.uid);
+      console.log('🔍 WorkoutsContent: Refetch triggered - Starting fetch for user:', user.uid, {
+        pathname: location.pathname,
+        locationKey: location.key
+      });
       setIsLoading(true);
       try {
-        const userWorkouts = await getUserWorkouts(user.uid);
+        // Bypass cache to get fresh data after generation
+        const userWorkouts = await getUserWorkouts(user.uid, { bypassCache: true });
         console.log('🔍 WorkoutsContent: Received workouts:', userWorkouts);
         setWorkouts(userWorkouts);
 
@@ -44,7 +76,7 @@ export default function WorkoutsContent({ isDark }) {
     };
 
     fetchWorkouts();
-  }, [user?.uid]);
+  }, [user?.uid, location.pathname, location.key]);
 
 
   if (isLoading) {
@@ -151,15 +183,6 @@ export default function WorkoutsContent({ isDark }) {
                   </div>
                 </div>
               )}
-
-              <motion.button
-                className="w-full mt-6 bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <FontAwesomeIcon icon={faPlay} />
-                <span>{isPlaceholder ? 'Preview Workout' : 'Start Workout'}</span>
-              </motion.button>
             </motion.div>
 
             {/* Progress Stats Card */}

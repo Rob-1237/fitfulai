@@ -6,7 +6,8 @@ import {
   setDoc,
   updateDoc,
   serverTimestamp,
-  addDoc
+  addDoc,
+  Timestamp
 } from 'firebase/firestore';
 import { db } from './firebase';
 
@@ -28,7 +29,9 @@ export const generateGroceryList = async (userProfile, mealPlan = null) => {
       mealPlanId: mealPlan?.id || 'standalone'
     };
 
+    console.log('🛒 GroceryGenerator: promptContext for hashing:', promptContext);
     const promptHash = 'grocery_' + btoa(JSON.stringify(promptContext)).slice(0, 26);
+    console.log('🛒 GroceryGenerator: Generated promptHash:', promptHash);
 
     // Check cache first
     console.log('🔍 Checking AI cache for existing grocery list...');
@@ -42,15 +45,30 @@ export const generateGroceryList = async (userProfile, mealPlan = null) => {
     }
 
     if (cachedResponse) {
-      console.log('✅ Found cached grocery list, using existing data');
+      console.log('✅ 🛒 CACHE HIT! Using cached grocery list data');
+      console.log('🛒 Cached grocery list ID:', cachedResponse.id);
+
+      // Even though we're using cached data, save a NEW Firestore document
+      // This ensures the latest generation shows up on the Groceries page
+      console.log('💾 🛒 Saving cached grocery list as new Firestore document...');
+      const processedGroceryList = await saveGroceryListToFirestore(userId, cachedResponse.response, {
+        promptTokens: 0,
+        completionTokens: 0,
+        totalTokens: 0,
+        cost: 0,
+        model: 'cached'
+      });
+      console.log('✅ 🛒 Cached grocery list saved as new document');
+
       return {
         success: true,
-        data: cachedResponse.response,
+        data: processedGroceryList,
         cached: true,
         source: 'cache'
       };
     }
 
+    console.log('❌ 🛒 CACHE MISS! Generating new grocery list with OpenAI...');
     // Build comprehensive AI prompt
     const prompt = buildGroceryListPrompt(userProfile, mealPlan);
 
@@ -282,6 +300,7 @@ const saveGroceryListToFirestore = async (userId, groceryListData, usage) => {
     // Save to Firestore
     const groceryListRef = doc(db, 'groceries', groceryListId);
     await setDoc(groceryListRef, groceryListDoc);
+    console.log('✅ 🛒 Grocery list saved to Firestore with ID:', groceryListId);
 
     // Remove placeholder grocery list if it exists
     await removeGroceryListPlaceholder(userId);
@@ -326,14 +345,14 @@ const cacheAIResponse = async (promptHash, userContext, aiResponse) => {
       requestType: 'grocery_list',
       response: aiResponse.data,
 
-      // Usage tracking
-      tokensUsed: aiResponse.usage.totalTokens,
-      cost: aiResponse.usage.cost,
-      model: aiResponse.usage.model,
+      // Usage tracking (with defaults to prevent undefined)
+      tokensUsed: aiResponse.usage?.totalTokens || 0,
+      cost: aiResponse.usage?.cost || 0,
+      model: aiResponse.usage?.model || 'unknown',
 
       // Cache management
       createdAt: serverTimestamp(),
-      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+      expiresAt: Timestamp.fromMillis(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
       hitCount: 0
     };
 

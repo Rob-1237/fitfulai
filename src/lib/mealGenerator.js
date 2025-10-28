@@ -6,7 +6,8 @@ import {
   setDoc,
   updateDoc,
   serverTimestamp,
-  addDoc
+  addDoc,
+  Timestamp
 } from 'firebase/firestore';
 import { db } from './firebase';
 
@@ -33,7 +34,9 @@ export const generateMealPlan = async (userProfile, planType = 'weekly') => {
       planType
     };
 
+    console.log('🍽️ MealGenerator: promptContext for hashing:', promptContext);
     const promptHash = 'meal_' + btoa(JSON.stringify(promptContext)).slice(0, 28);
+    console.log('🍽️ MealGenerator: Generated promptHash:', promptHash);
 
     // Check cache first
     console.log('Checking AI cache for existing meal plan...');
@@ -47,14 +50,29 @@ export const generateMealPlan = async (userProfile, planType = 'weekly') => {
     }
 
     if (cachedResponse) {
-      console.log(' Found cached meal plan, using existing data');
+      console.log('✅ 🍽️ CACHE HIT! Using cached meal plan data');
+      console.log('🍽️ Cached meal plan ID:', cachedResponse.id);
+
+      // Even though we're using cached data, save a NEW Firestore document
+      // This ensures the latest generation shows up on the Meals page
+      console.log('💾 🍽️ Saving cached meal plan as new Firestore document...');
+      const processedMealPlan = await saveMealPlanToFirestore(userId, cachedResponse.response, {
+        promptTokens: 0,
+        completionTokens: 0,
+        totalTokens: 0,
+        cost: 0,
+        model: 'cached'
+      });
+      console.log('✅ 🍽️ Cached meal plan saved as new document');
+
       return {
         success: true,
-        data: cachedResponse.response,
+        data: processedMealPlan,
         cached: true,
         source: 'cache'
       };
     }
+    console.log('❌ 🍽️ CACHE MISS! Generating new meal plan with OpenAI...');
 
     // Build comprehensive AI prompt
     const prompt = buildMealPlanPrompt(userProfile, planType);
@@ -278,6 +296,7 @@ const saveMealPlanToFirestore = async (userId, mealPlanData, usage) => {
     // Save to Firestore
     const mealPlanRef = doc(db, 'meals', mealPlanId);
     await setDoc(mealPlanRef, mealPlanDoc);
+    console.log('✅ 🍽️ Meal plan saved to Firestore with ID:', mealPlanId);
 
     // Remove placeholder meal plan if it exists
     await removeMealPlanPlaceholder(userId);
@@ -322,14 +341,14 @@ const cacheAIResponse = async (promptHash, userContext, aiResponse) => {
       requestType: 'meal_plan',
       response: aiResponse.data,
 
-      // Usage tracking
-      tokensUsed: aiResponse.usage.totalTokens,
-      cost: aiResponse.usage.cost,
-      model: aiResponse.usage.model,
+      // Usage tracking (with defaults to prevent undefined)
+      tokensUsed: aiResponse.usage?.totalTokens || 0,
+      cost: aiResponse.usage?.cost || 0,
+      model: aiResponse.usage?.model || 'unknown',
 
       // Cache management
       createdAt: serverTimestamp(),
-      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+      expiresAt: Timestamp.fromMillis(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
       hitCount: 0
     };
 

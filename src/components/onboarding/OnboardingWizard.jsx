@@ -13,7 +13,7 @@ import DietaryPreferencesStep from './steps/DietaryPreferencesStep';
 import ReviewStep from './steps/ReviewStep';
 
 export default function OnboardingWizard({ open, onClose }) {
-  const { user, userProfile } = useAuth();
+  const { user, userProfile, refreshUserProfile } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [showGenerationModal, setShowGenerationModal] = useState(false);
@@ -117,14 +117,22 @@ export default function OnboardingWizard({ open, onClose }) {
     switch (currentStep) {
       case 1: // Basic Info
         return onboardingData.age && onboardingData.gender && onboardingData.unitsPreference;
-      case 2: // Physical Stats
-        const hasHeight = onboardingData.unitsPreference === 'imperial'
-          ? (onboardingData.heightFeet && onboardingData.heightInches)
-          : onboardingData.heightCm;
-        const hasWeight = onboardingData.unitsPreference === 'imperial'
-          ? onboardingData.weightLbs
-          : onboardingData.weightKg;
-        return hasHeight && hasWeight;
+      case 2: // Physical Stats - Apply validation thresholds
+        if (onboardingData.unitsPreference === 'imperial') {
+          const heightFeetValid = onboardingData.heightFeet >= 3 && onboardingData.heightFeet <= 8;
+          // Allow 0 as valid inches value (e.g., 6'0")
+          const heightInchesValid = (onboardingData.heightInches === 0 || onboardingData.heightInches) &&
+                                    onboardingData.heightInches >= 0 &&
+                                    onboardingData.heightInches <= 11;
+          const totalInches = (onboardingData.heightFeet * 12) + (onboardingData.heightInches || 0);
+          const totalHeightValid = totalInches >= 36 && totalInches <= 96;
+          const weightValid = onboardingData.weightLbs >= 50 && onboardingData.weightLbs <= 1000;
+          return heightFeetValid && heightInchesValid && totalHeightValid && weightValid;
+        } else {
+          const heightValid = onboardingData.heightCm >= 91 && onboardingData.heightCm <= 244;
+          const weightValid = onboardingData.weightKg >= 22 && onboardingData.weightKg <= 453;
+          return heightValid && weightValid;
+        }
       case 3: // Fitness Goals
         return onboardingData.fitnessGoal && onboardingData.activityLevel;
       case 4: // Dietary Preferences (optional step)
@@ -307,12 +315,21 @@ export default function OnboardingWizard({ open, onClose }) {
       <GenerationProgressModal
         isOpen={showGenerationModal}
         onClose={() => setShowGenerationModal(false)}
-        onComplete={(results) => {
+        onComplete={async (results) => {
           console.log('🎉 AI generation completed:', results);
           setShowGenerationModal(false);
 
           // Clear draft data since onboarding is complete
           localStorage.removeItem('onboarding_draft');
+
+          // CRITICAL: Refresh userProfile in AuthContext to reflect onboarding completion
+          console.log('🔄 OnboardingWizard: Triggering AuthContext profile refresh...');
+          try {
+            await refreshUserProfile();
+            console.log('✅ OnboardingWizard: Profile refreshed, closing modal');
+          } catch (error) {
+            console.error('❌ Error refreshing profile:', error);
+          }
 
           // Close and let parent handle navigation to dashboard
           onClose();

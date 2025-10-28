@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
@@ -14,6 +15,7 @@ import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 
 export default function GroceriesContent({ isDark }) {
+  const location = useLocation();
   const { user } = useAuth();
   const [groceryLists, setGroceryLists] = useState([]);
   const [currentWeekData, setCurrentWeekData] = useState(null);
@@ -25,13 +27,19 @@ export default function GroceriesContent({ isDark }) {
     const fetchGroceries = async () => {
       if (!user?.uid) return;
 
+      console.log('🛒 GroceriesContent: Refetch triggered - Starting fetch for user:', user.uid, {
+        pathname: location.pathname,
+        locationKey: location.key
+      });
       setIsLoading(true);
       try {
+        // Bypass cache to get fresh data after generation
         const [userGroceryLists, weekData] = await Promise.all([
-          getUserGroceryLists(user.uid),
+          getUserGroceryLists(user.uid, { bypassCache: true }),
           getCurrentWeekData(user.uid)
         ]);
 
+        console.log('🛒 GroceriesContent: Received grocery lists:', userGroceryLists);
         setGroceryLists(userGroceryLists);
         setCurrentWeekData(weekData);
       } catch (error) {
@@ -42,7 +50,7 @@ export default function GroceriesContent({ isDark }) {
     };
 
     fetchGroceries();
-  }, [user?.uid]);
+  }, [user?.uid, location.pathname, location.key]);
 
   // Derive current grocery list
   const currentGroceryList = currentWeekData?.groceryList || groceryLists[0];
