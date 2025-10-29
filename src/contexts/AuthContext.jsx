@@ -69,19 +69,10 @@ export const AuthProvider = ({ children }) => {
           // Onboarding status
           onboardingCompleted: false,
 
-          // Physical characteristics (will be filled during onboarding)
-          age: null,
-          weightLbs: null,
-          weightKgs: null,
-          heightInches: null,
-          heightCentimeters: null,
-          gender: null,
-
-          // Fitness & nutrition preferences
-          fitnessGoal: null,
-          activityLevel: null,
-          dietaryPreferences: [],
+          // Recipe and dietary preferences (will be filled during onboarding)
+          dietaryRestrictions: [],
           allergies: [],
+          defaultServingSize: 4,
 
           // AI usage tracking
           aiGenerationsUsed: 0,
@@ -91,6 +82,13 @@ export const AuthProvider = ({ children }) => {
           tier: 'free',
           subscriptionStatus: 'active',
           subscriptionEndDate: null,
+
+          // User preferences
+          preferences: {
+            mealComplexity: 'intermediate',
+            cuisinePreferences: [],
+            budgetRange: 'medium'
+          },
 
           ...additionalData
         };
@@ -218,7 +216,7 @@ export const AuthProvider = ({ children }) => {
         console.log('👤 AuthProvider: User is authenticated, fetching profile...');
 
         try {
-          // Fetch user profile from Firestore (don't auto-create - onboarding handles that)
+          // Fetch user profile from Firestore (created during signup)
           console.log('🔍 AuthProvider: Fetching user profile...');
           const profile = await fetchUserProfile(user.uid);
           setUserProfile(profile);
@@ -287,6 +285,11 @@ export const AuthProvider = ({ children }) => {
       } else {
         console.log('ℹ️ No name provided or user missing, skipping display name update');
       }
+
+      // Create Firestore user document
+      console.log('📝 Creating Firestore user document...');
+      await createUserDocument(newUser);
+      console.log('✅ Firestore user document created');
 
       console.log('🎉 SIGNUP COMPLETED SUCCESSFULLY');
       return { success: true, error: null };

@@ -46,3 +46,10 @@ _______________
   5. We should keep only ONE active meal plan per user (simpler)
   
 I'm just trying to ensure we don't build an app that can only be useful to poeple who live alone and/or cook for one person. We should strongly consider getting rid of personal info like Age, weight, and height,, because then we can focus on servings, calories, prices, and ounces.
+
+
+______________
+
+Once I signed up, I again got the error in the console saying "User document does not exist in Firestore."
+When I completed the onboarding fields and clicked "Generate my Meal PLan", the following error displayed:
+```No document to update: projects/fitfulai-994f6/databases/(default)/documents/users/gzr92u4jgbZaQqos4NJgQ5RGDOp1```
