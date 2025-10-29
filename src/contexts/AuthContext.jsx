@@ -51,7 +51,7 @@ export const AuthProvider = ({ children }) => {
     }
 
     try {
-      const userDocRef = doc(db, 'profiles', user.uid);
+      const userDocRef = doc(db, 'users', user.uid);
       console.log('🔥 Checking if user document exists:', user.uid);
 
       const userDoc = await getDoc(userDocRef);
@@ -124,7 +124,7 @@ export const AuthProvider = ({ children }) => {
     }
 
     try {
-      const userDocRef = doc(db, 'profiles', uid);
+      const userDocRef = doc(db, 'users', uid);
       console.log('🔍 Fetching user document from Firestore...');
 
       const userDoc = await getDoc(userDocRef);
@@ -168,7 +168,7 @@ export const AuthProvider = ({ children }) => {
     }
 
     try {
-      const userDocRef = doc(db, 'profiles', user.uid);
+      const userDocRef = doc(db, 'users', user.uid);
       console.log('🔄 Updating user document in Firestore...');
 
       const updateData = {
