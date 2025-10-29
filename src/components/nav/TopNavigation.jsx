@@ -6,41 +6,37 @@ import { useAuth } from '../../hooks/useAuth';
 import { useUIStore } from '../../stores/useUIStore';
 import SettingsModal from '../modals/SettingsModal';
 import EditAccountModal from '../modals/EditAccountModal';
+import QuickOnboardingModal from '../onboarding/QuickOnboardingModal';
 
 const TopNavigation = ({ isDark, isMobile, onboarded }) => {
-  const { user, userProfile, signOut } = useAuth();
+  const { user, userProfile, signOut, refreshUserProfile } = useAuth();
   const { openModal, closeModal, modals } = useUIStore();
-  const [showOnboardingWizard, setShowOnboardingWizard] = useState(false);
-  const [OnboardingWizard, setOnboardingWizard] = useState(null);
+  const [showOnboardingModal, setShowOnboardingModal] = useState(false);
 
   console.log("isMobile value: ", isMobile);
   // Single state logic
   const userState = user && userProfile?.onboardingCompleted ? "onboarded" : user ? "logged" : "unlogged";
-
-  // console.log('🔝 TopNavigation - userState:', userState);
-  // console.log("userProfile: ", userProfile);
 
   const handleSignIn = () => {
     console.log('🔝 Opening auth modal');
     openModal('auth');
   };
 
-  const handleGetStarted = async () => {
-    console.log('🔝 Opening onboarding wizard');
+  const handleGetStarted = () => {
+    console.log('🔝 Opening quick onboarding modal');
+    setShowOnboardingModal(true);
+  };
 
-    // Dynamically import OnboardingWizard only when needed
-    if (!OnboardingWizard) {
-      try {
-        console.log('🔝 Dynamically loading OnboardingWizard component...');
-        const { default: OnboardingWizardComponent } = await import('../onboarding/OnboardingWizard');
-        setOnboardingWizard(() => OnboardingWizardComponent);
-      } catch (error) {
-        console.error('🔴 Failed to load OnboardingWizard:', error);
-        return;
-      }
+  const handleOnboardingComplete = async (data) => {
+    console.log('🔝 Onboarding completed with data:', data);
+
+    // Refresh user profile to get updated onboarding status
+    if (refreshUserProfile) {
+      await refreshUserProfile();
     }
 
-    setShowOnboardingWizard(true);
+    // TODO: Trigger meal plan generation here
+    console.log('TODO: Generate initial meal plan based on:', data);
   };
 
   const handleSignOut = async () => {
@@ -109,13 +105,12 @@ const TopNavigation = ({ isDark, isMobile, onboarded }) => {
         {renderCTA()}
       </div>
 
-      {/* Onboarding Wizard Modal - Only render if dynamically loaded */}
-      {OnboardingWizard && (
-        <OnboardingWizard
-          open={showOnboardingWizard}
-          onClose={() => setShowOnboardingWizard(false)}
-        />
-      )}
+      {/* Quick Onboarding Modal */}
+      <QuickOnboardingModal
+        open={showOnboardingModal}
+        onClose={() => setShowOnboardingModal(false)}
+        onComplete={handleOnboardingComplete}
+      />
 
       {/* Settings Modal */}
       <SettingsModal
