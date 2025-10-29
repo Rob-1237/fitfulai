@@ -1,4 +1,3 @@
-import { generateWorkout } from './workoutGenerator';
 import { generateMealPlan } from './mealGenerator';
 import { generateGroceryList } from './groceryGenerator';
 
@@ -7,7 +6,6 @@ export const generateCompleteUserPlan = async (userProfile, onProgress = () => {
   console.log('🚀 Starting complete plan generation for user:', userProfile.id);
 
   const results = {
-    workout: null,
     meals: null,
     groceries: null,
     errors: [],
@@ -28,34 +26,14 @@ export const generateCompleteUserPlan = async (userProfile, onProgress = () => {
   };
 
   // Initialize progress for all steps
-  updateProgress('workout', 'pending');
   updateProgress('meals', 'pending');
   updateProgress('groceries', 'pending');
 
   try {
     const startTime = Date.now();
 
-    // Start workout and meal plan generations in parallel
+    // Start meal plan generation
     console.log('🔄 Starting parallel AI generations...');
-
-    const workoutPromise = (async () => {
-      updateProgress('workout', 'in_progress');
-      try {
-        const result = await generateWorkout(userProfile);
-        if (result.success) {
-          updateProgress('workout', 'completed', { name: result.data.name });
-          results.workout = result;
-          results.totalCost += result.usage?.cost || 0;
-        } else {
-          throw new Error(result.error);
-        }
-      } catch (error) {
-        console.error('❌ Workout generation failed:', error);
-        updateProgress('workout', 'failed', { error: error.message });
-        results.errors.push({ type: 'workout', error: error.message });
-        throw error;
-      }
-    })();
 
     const mealPlanPromise = (async () => {
       updateProgress('meals', 'in_progress');
@@ -101,7 +79,7 @@ export const generateCompleteUserPlan = async (userProfile, onProgress = () => {
       }
     })();
 
-    const generationPromises = [workoutPromise, mealPlanPromise, groceryPromise];
+    const generationPromises = [mealPlanPromise, groceryPromise];
 
     // Wait for all generations to complete (with individual error handling)
     const settledResults = await Promise.allSettled(generationPromises);
@@ -112,8 +90,8 @@ export const generateCompleteUserPlan = async (userProfile, onProgress = () => {
     const failedGenerations = settledResults.filter(result => result.status === 'rejected');
     const successfulGenerations = settledResults.filter(result => result.status === 'fulfilled');
 
-    console.log(`✅ Completed ${successfulGenerations.length}/3 generations`);
-    console.log(`❌ Failed ${failedGenerations.length}/3 generations`);
+    console.log(`✅ Completed ${successfulGenerations.length}/2 generations`);
+    console.log(`❌ Failed ${failedGenerations.length}/2 generations`);
 
     if (failedGenerations.length > 0) {
       console.log('🔄 Attempting retries for failed generations...');
@@ -151,7 +129,7 @@ export const generateCompleteUserPlan = async (userProfile, onProgress = () => {
       results,
       summary: {
         successful: 0,
-        failed: 3,
+        failed: 2,
         totalCost: results.totalCost,
         totalDuration: Date.now() - (results.startTime || Date.now()),
         completedAt: new Date().toISOString()
@@ -175,9 +153,6 @@ const retryFailedGenerations = async (userProfile, currentResults, onProgress, m
         let result;
 
         switch (type) {
-          case 'workout':
-            result = await generateWorkout(userProfile);
-            break;
           case 'meals':
             result = await generateMealPlan(userProfile);
             break;
@@ -234,15 +209,14 @@ const retryFailedGenerations = async (userProfile, currentResults, onProgress, m
 
 // Helper function to check if user has complete plans
 export const hasCompletePlans = (user) => {
-  // This would check Firestore for existing workout, meal, and grocery plans
-  // Return true if user has all three, false otherwise
+  // This would check Firestore for existing meal and grocery plans
+  // Return true if user has both, false otherwise
   // Implementation depends on your data structure
   return false; // Placeholder
 };
 
 // Helper function to get generation progress steps
 export const getGenerationSteps = () => [
-  { id: 'workout', name: 'Workout Plan', description: 'Creating personalized exercise routines' },
   { id: 'meals', name: 'Meal Plan', description: 'Designing nutrition-focused meal schedules' },
   { id: 'groceries', name: 'Grocery List', description: 'Organizing efficient shopping lists' }
 ];
