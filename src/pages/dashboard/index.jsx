@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faChartUser, faRobot, faPersonRunning, faPlateUtensils, faBasketShopping, faBrain, faClock } from "@fortawesome/pro-duotone-svg-icons";
+import { faChartUser, faRobot, faPlateUtensils, faBasketShopping, faBrain, faClock } from "@fortawesome/pro-duotone-svg-icons";
 import { useAuth } from "../../hooks/useAuth";
-import { getUserWorkouts, getUserMealPlans, getUserGroceryLists } from "../../lib/firestoreQueries";
+import { getUserMealPlans, getUserGroceryLists } from "../../lib/firestoreQueries";
 import ProfileEditor from "../../components/dashboard/ProfileEditor";
 import GenerationProgressModal from "../../components/generation/GenerationProgressModal";
 
@@ -28,20 +28,18 @@ function Dashboard({ isDark }) {
             if (!user?.uid || userState !== "onboarded") return;
 
             try {
-                // Fetch all three plan types
-                const [workouts, meals, groceries] = await Promise.all([
-                    getUserWorkouts(user.uid),
+                // Fetch meal and grocery plans
+                const [meals, groceries] = await Promise.all([
                     getUserMealPlans(user.uid),
                     getUserGroceryLists(user.uid)
                 ]);
 
                 // Check if any plans exist
-                const hasPlans = workouts.length > 0 || meals.length > 0 || groceries.length > 0;
+                const hasPlans = meals.length > 0 || groceries.length > 0;
                 setHasGeneratedPlans(hasPlans);
 
                 // Find the most recent generation date across all plan types
                 const allDates = [
-                    ...workouts.map(w => w.generatedAt),
                     ...meals.map(m => m.generatedAt),
                     ...groceries.map(g => g.generatedAt)
                 ].filter(date => date); // Remove nulls
@@ -91,24 +89,7 @@ function Dashboard({ isDark }) {
             </div>
 
             {/* Core Features Grid */}
-            <div className="grid md:grid-cols-3 gap-8 mb-16">
-                <motion.div
-                    className={`text-center p-8 rounded-xl border ${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} shadow-lg`}
-                    whileHover={{ scale: 1.03, y: -5 }}
-                    transition={{ duration: 0.2 }}
-                >
-                    <FontAwesomeIcon icon={faPersonRunning} className="text-blue-500 text-4xl mb-4" />
-                    <h3 className={`text-xl font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                        Smart Workouts
-                    </h3>
-                    <p className={`${isDark ? 'text-gray-300' : 'text-gray-600'} mb-4`}>
-                        Bi-weekly workout plans generated to adapt to your fitness level, goals, and schedule.
-                    </p>
-                    <div className={`text-sm ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
-                        Personalized • Progressive • Flexible
-                    </div>
-                </motion.div>
-
+            <div className="grid md:grid-cols-2 gap-8 mb-16">
                 <motion.div
                     className={`text-center p-8 rounded-xl border ${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} shadow-lg`}
                     whileHover={{ scale: 1.03, y: -5 }}
@@ -341,14 +322,12 @@ function Dashboard({ isDark }) {
                         await refreshUserProfile();
 
                         // Refetch last generation date
-                        const [workouts, meals, groceries] = await Promise.all([
-                            getUserWorkouts(user.uid),
+                        const [meals, groceries] = await Promise.all([
                             getUserMealPlans(user.uid),
                             getUserGroceryLists(user.uid)
                         ]);
 
                         const allDates = [
-                            ...workouts.map(w => w.generatedAt),
                             ...meals.map(m => m.generatedAt),
                             ...groceries.map(g => g.generatedAt)
                         ].filter(date => date);
