@@ -110,9 +110,10 @@ export default function ProfileEditor({ isDark, onRegenerateClick }) {
   };
 
   const toggleRestriction = (restrictionId) => {
-    const newRestrictions = editedData.dietaryRestrictions.includes(restrictionId)
-      ? editedData.dietaryRestrictions.filter(id => id !== restrictionId)
-      : [...editedData.dietaryRestrictions, restrictionId];
+    const currentRestrictions = editedData.dietaryRestrictions || [];
+    const newRestrictions = currentRestrictions.includes(restrictionId)
+      ? currentRestrictions.filter(id => id !== restrictionId)
+      : [...currentRestrictions, restrictionId];
 
     setEditedData({ ...editedData, dietaryRestrictions: newRestrictions });
     setHasUnsavedChanges(true);
@@ -120,10 +121,11 @@ export default function ProfileEditor({ isDark, onRegenerateClick }) {
 
   const addAllergy = () => {
     const trimmed = allergyInput.trim();
-    if (trimmed && !editedData.allergies.includes(trimmed.toLowerCase())) {
+    const currentAllergies = editedData.allergies || [];
+    if (trimmed && !currentAllergies.includes(trimmed.toLowerCase())) {
       setEditedData({
         ...editedData,
-        allergies: [...editedData.allergies, trimmed.toLowerCase()]
+        allergies: [...currentAllergies, trimmed.toLowerCase()]
       });
       setAllergyInput('');
       setHasUnsavedChanges(true);
@@ -131,9 +133,10 @@ export default function ProfileEditor({ isDark, onRegenerateClick }) {
   };
 
   const removeAllergy = (allergyToRemove) => {
+    const currentAllergies = editedData.allergies || [];
     setEditedData({
       ...editedData,
-      allergies: editedData.allergies.filter(a => a !== allergyToRemove)
+      allergies: currentAllergies.filter(a => a !== allergyToRemove)
     });
     setHasUnsavedChanges(true);
   };
@@ -222,7 +225,7 @@ export default function ProfileEditor({ isDark, onRegenerateClick }) {
                   onClick={() => toggleRestriction(restriction.id)}
                   className={`
                     px-4 py-3 rounded-lg border-2 transition-all text-sm font-medium
-                    ${editedData.dietaryRestrictions.includes(restriction.id)
+                    ${editedData.dietaryRestrictions?.includes(restriction.id)
                       ? 'border-green-500 bg-green-50 text-green-700'
                       : isDark
                       ? 'border-gray-600 bg-gray-700 text-gray-300 hover:border-gray-500'
@@ -238,8 +241,8 @@ export default function ProfileEditor({ isDark, onRegenerateClick }) {
             </div>
           ) : (
             <div className="flex flex-wrap gap-2">
-              {editedData.dietaryRestrictions.length > 0 ? (
-                editedData.dietaryRestrictions.map(id => {
+              {editedData.dietaryRestrictions?.length > 0 ? (
+                editedData.dietaryRestrictions?.map(id => {
                   const restriction = DIETARY_RESTRICTIONS.find(r => r.id === id);
                   return (
                     <span
@@ -300,9 +303,9 @@ export default function ProfileEditor({ isDark, onRegenerateClick }) {
               </div>
 
               {/* Allergy Chips */}
-              {editedData.allergies.length > 0 && (
+              {editedData.allergies?.length > 0 && (
                 <div className="flex flex-wrap gap-2">
-                  {editedData.allergies.map((allergy) => (
+                  {editedData.allergies?.map((allergy) => (
                     <motion.div
                       key={allergy}
                       initial={{ opacity: 0, scale: 0.8 }}
@@ -323,8 +326,8 @@ export default function ProfileEditor({ isDark, onRegenerateClick }) {
             </div>
           ) : (
             <div className="flex flex-wrap gap-2">
-              {editedData.allergies.length > 0 ? (
-                editedData.allergies.map(allergy => (
+              {editedData.allergies?.length > 0 ? (
+                editedData.allergies?.map(allergy => (
                   <span
                     key={allergy}
                     className={`px-3 py-1 rounded-full text-sm font-medium capitalize ${
