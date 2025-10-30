@@ -794,3 +794,78 @@
 ---
 
 *This strategy synthesizes input from 4 independent LLM analyses (GPT-4, Claude, etc.) and prioritizes rapid, high-impact PoC development over comprehensive feature completion. All strategic decisions optimize for: timeline (2-3 months), solo developer constraints, career advancement goals, and stakeholder impact.*
+
+
+
+
+________________
+
+What needs to be proven:
+  1. Users can complete simplified onboarding (dietary prefs, not fitness metrics)
+  2. AI generates recipe-focused meal plans (not TDEE/macro-based)
+  3. Grocery lists derive from those meal plans
+  4. Users can view and interact with their plans
+
+  Current gaps:
+  - ✅ Onboarding works (you tested it)
+  - ❌ AI generation never triggers (TODO comment in TopNavigation.jsx)
+  - ❌ Meal/grocery generators still use OLD approach (fitness-focused, TDEE calculations)
+  - ❌ No UI to display generated plans to users
+
+  Strategic Options:
+
+  Option A: Quick & Dirty POC - Test the Plumbing
+  - Wire up generation to trigger after onboarding
+  - Use existing generators AS-IS (even if data structure isn't perfect)
+  - Just prove: onboard → generate → save → display
+  - Refine data model later
+  - Pro: Fast, proves the flow works
+  - Con: Generated data won't match new vision yet
+
+  Option B: Redesign Data Structure First
+  - Define what a "recipe-focused meal plan" looks like (fields, structure)
+  - Update mealGenerator.js to create that structure
+  - Then wire up generation
+  - Pro: Clean foundation, matches new vision
+  - Con: More upfront design work
+
+  Option C: UI Mockup First
+  - Hardcode fake meal/grocery data
+  - Build dashboard/meals page to display it beautifully
+  - Get user feedback on what you want to see
+  - Then wire up real generation
+  - Pro: See the vision before building it
+  - Con: No AI testing yet
+
+  Option D: Meals Only (Simplest Scope)
+  - Ignore groceries for now
+  - Just get meal generation → display working
+  - Add groceries later
+  - Pro: Smallest scope, fastest validation
+  - Con: Doesn't test the full vision
+
+  Key decisions you need to make:
+
+  1. What should a meal plan contain?
+    - Still track calories/macros per meal? Or just recipes?
+    - How many days? (7 days like before, or different?)
+    - How many meals per day? (3 meals, or flexible?)
+  2. Where should plans appear?
+    - Dashboard as "meal calendar" (your earlier idea)?
+    - Or separate /meals and /groceries pages?
+  3. When does generation happen?
+    - Automatically after onboarding completes?
+    - Manual "Generate" button?
+    - Both?
+  4. POC scope?
+    - Just prove generation works (Option A/D)?
+    - Or nail the full UX vision (Option C)?
+
+  My recommendation:
+  Start with Option D + A hybrid: Get meal generation working first (ignore groceries), but take 10 minutes to define what fields a meal plan should have for your recipe-focused approach. That way you prove the flow works without too much refactoring, but also move toward the new vision.
+
+  What resonates with you?
+
+  ___________
+
+  First discuss what the meal plan data structure should look like (Option 3)

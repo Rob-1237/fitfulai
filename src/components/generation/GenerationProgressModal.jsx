@@ -15,7 +15,6 @@ import {
 const GenerationProgressModal = ({ isOpen, onClose, onComplete, userProfile, isDark = false }) => {
   const [currentStep, setCurrentStep] = useState(null);
   const [stepStatuses, setStepStatuses] = useState({
-    workout: 'pending',
     meals: 'pending',
     groceries: 'pending'
   });
@@ -27,13 +26,6 @@ const GenerationProgressModal = ({ isOpen, onClose, onComplete, userProfile, isD
   const navigate = useNavigate();
 
   const steps = [
-    {
-      id: 'workout',
-      name: 'Workout Plan',
-      description: 'Creating personalized exercise routines',
-      icon: faDumbbell,
-      color: 'blue'
-    },
     {
       id: 'meals',
       name: 'Meal Plan',
@@ -97,7 +89,6 @@ const GenerationProgressModal = ({ isOpen, onClose, onComplete, userProfile, isD
     } catch (error) {
       console.error('❌ Generation process failed:', error);
       setStepStatuses(prev => ({
-        workout: prev.workout === 'completed' ? 'completed' : 'failed',
         meals: prev.meals === 'completed' ? 'completed' : 'failed',
         groceries: prev.groceries === 'completed' ? 'completed' : 'failed'
       }));

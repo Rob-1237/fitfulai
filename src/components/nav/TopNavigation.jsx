@@ -7,11 +7,13 @@ import { useUIStore } from '../../stores/useUIStore';
 import SettingsModal from '../modals/SettingsModal';
 import EditAccountModal from '../modals/EditAccountModal';
 import QuickOnboardingModal from '../onboarding/QuickOnboardingModal';
+import GenerationProgressModal from '../generation/GenerationProgressModal';
 
 const TopNavigation = ({ isDark, isMobile, onboarded }) => {
   const { user, userProfile, signOut, refreshUserProfile } = useAuth();
   const { openModal, closeModal, modals } = useUIStore();
   const [showOnboardingModal, setShowOnboardingModal] = useState(false);
+  const [showGenerationModal, setShowGenerationModal] = useState(false);
 
   console.log("isMobile value: ", isMobile);
   // Single state logic
@@ -30,13 +32,22 @@ const TopNavigation = ({ isDark, isMobile, onboarded }) => {
   const handleOnboardingComplete = async (data) => {
     console.log('🔝 Onboarding completed with data:', data);
 
+    // Close onboarding modal
+    setShowOnboardingModal(false);
+
     // Refresh user profile to get updated onboarding status
     if (refreshUserProfile) {
       await refreshUserProfile();
     }
 
-    // TODO: Trigger meal plan generation here
-    console.log('TODO: Generate initial meal plan based on:', data);
+    // Trigger automatic meal plan generation
+    console.log('🚀 Triggering automatic plan generation based on:', data);
+    setShowGenerationModal(true);
+  };
+
+  const handleGenerationComplete = (results) => {
+    console.log('🎉 TopNavigation: Generation completed with results:', results);
+    setShowGenerationModal(false);
   };
 
   const handleSignOut = async () => {
@@ -122,6 +133,15 @@ const TopNavigation = ({ isDark, isMobile, onboarded }) => {
       <EditAccountModal
         open={modals.editAccount}
         onClose={() => closeModal('editAccount')}
+        isDark={isDark}
+      />
+
+      {/* Generation Progress Modal */}
+      <GenerationProgressModal
+        isOpen={showGenerationModal}
+        onClose={() => setShowGenerationModal(false)}
+        onComplete={handleGenerationComplete}
+        userProfile={userProfile}
         isDark={isDark}
       />
     </div>
