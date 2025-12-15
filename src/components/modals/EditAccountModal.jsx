@@ -48,20 +48,12 @@ export default function EditAccountModal({ open, onClose, isDark }) {
     setIsLoading(true);
 
     try {
-      console.log('📝 EditAccountModal: Submitting changes:', {
-        name: formData.name,
-        unitsPreference: formData.unitsPreference
-      });
-
       const result = await updateUserProfile({
         name: formData.name,
         unitsPreference: formData.unitsPreference
       });
 
-      console.log('📝 EditAccountModal: updateUserProfile result:', result);
-
       if (result.success) {
-        console.log('✅ EditAccountModal: Profile updated successfully, closing modal');
         addToast('Account updated successfully!', 'success');
         onClose();
       } else {

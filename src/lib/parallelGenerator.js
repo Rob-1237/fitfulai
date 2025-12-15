@@ -2,8 +2,7 @@ import { generateMealPlan } from './mealGenerator';
 import { generateGroceryList } from './groceryGenerator';
 
 // Parallel AI generation orchestrator with progress tracking and retry logic
-export const generateCompleteUserPlan = async (userProfile, onProgress = () => {}) => {
-  console.log('🚀 Starting complete plan generation for user:', userProfile.id);
+export const generateCompleteUserPlan = async (userProfile, onProgress = () => {}, forceRefresh = false) => {
 
   const results = {
     meals: null,
@@ -21,7 +20,6 @@ export const generateCompleteUserPlan = async (userProfile, onProgress = () => {
       data,
       timestamp: new Date().toISOString()
     };
-    console.log(`📊 Progress Update:`, progress);
     onProgress(progress);
   };
 
@@ -32,13 +30,10 @@ export const generateCompleteUserPlan = async (userProfile, onProgress = () => {
   try {
     const startTime = Date.now();
 
-    // Start meal plan generation
-    console.log('🔄 Starting parallel AI generations...');
-
     const mealPlanPromise = (async () => {
       updateProgress('meals', 'in_progress');
       try {
-        const result = await generateMealPlan(userProfile);
+        const result = await generateMealPlan(userProfile, 'weekly', forceRefresh);
         if (result.success) {
           updateProgress('meals', 'completed', { name: result.data.name });
           results.meals = result;
@@ -62,7 +57,7 @@ export const generateCompleteUserPlan = async (userProfile, onProgress = () => {
         await mealPlanPromise;
 
         const mealPlan = results.meals?.data;
-        const result = await generateGroceryList(userProfile, mealPlan);
+        const result = await generateGroceryList(userProfile, mealPlan, forceRefresh);
 
         if (result.success) {
           updateProgress('groceries', 'completed', { name: result.data.name });
@@ -88,14 +83,8 @@ export const generateCompleteUserPlan = async (userProfile, onProgress = () => {
 
     // Check results and handle partial failures
     const failedGenerations = settledResults.filter(result => result.status === 'rejected');
-    const successfulGenerations = settledResults.filter(result => result.status === 'fulfilled');
-
-    console.log(`✅ Completed ${successfulGenerations.length}/2 generations`);
-    console.log(`❌ Failed ${failedGenerations.length}/2 generations`);
 
     if (failedGenerations.length > 0) {
-      console.log('🔄 Attempting retries for failed generations...');
-
       // Retry logic for failed generations
       const retryResults = await retryFailedGenerations(userProfile, results, onProgress);
       Object.assign(results, retryResults);
@@ -115,8 +104,6 @@ export const generateCompleteUserPlan = async (userProfile, onProgress = () => {
         completedAt: new Date().toISOString()
       }
     };
-
-    console.log('🎉 Complete plan generation finished:', finalResults.summary);
 
     return finalResults;
 
@@ -144,8 +131,6 @@ const retryFailedGenerations = async (userProfile, currentResults, onProgress, m
 
   for (const error of currentResults.errors) {
     const { type } = error;
-
-    console.log(`🔄 Retrying ${type} generation...`);
     onProgress({ step: type, status: 'retrying', timestamp: new Date().toISOString() });
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
@@ -154,18 +139,17 @@ const retryFailedGenerations = async (userProfile, currentResults, onProgress, m
 
         switch (type) {
           case 'meals':
-            result = await generateMealPlan(userProfile);
+            result = await generateMealPlan(userProfile, 'weekly', forceRefresh);
             break;
           case 'groceries':
             const mealPlan = retryResults.meals?.data;
-            result = await generateGroceryList(userProfile, mealPlan);
+            result = await generateGroceryList(userProfile, mealPlan, forceRefresh);
             break;
           default:
             continue;
         }
 
         if (result.success) {
-          console.log(`✅ ${type} retry attempt ${attempt} succeeded`);
           onProgress({
             step: type,
             status: 'completed',
@@ -180,7 +164,6 @@ const retryFailedGenerations = async (userProfile, currentResults, onProgress, m
           retryResults.errors = retryResults.errors.filter(e => e.type !== type);
           break;
         } else {
-          console.log(`❌ ${type} retry attempt ${attempt} failed:`, result.error);
           if (attempt === maxRetries) {
             onProgress({
               step: type,
@@ -191,7 +174,6 @@ const retryFailedGenerations = async (userProfile, currentResults, onProgress, m
           }
         }
       } catch (retryError) {
-        console.log(`❌ ${type} retry attempt ${attempt} crashed:`, retryError.message);
         if (attempt === maxRetries) {
           onProgress({
             step: type,

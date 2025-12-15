@@ -37,20 +37,6 @@ const Home = ({ isDark }) => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.6 }}
       >
-        {/* {user && (
-          <div className="p-6 bg-green-50 border border-green-200 rounded-lg">
-            <p className="text-green-800 font-medium text-lg">✅ Welcome back!</p>
-            <p className="text-sm text-green-600 mt-2">
-              {user.email}
-            </p>
-          </div>
-        )} */}
-        {/* <p className={`${isDark ? 'text-[var(--color-lt-gray)]' : 'text-[var(--color-dk-gray)]'}`}>
-          {user
-            ? "Navigate using the menu to access your workouts, meals, and more."
-            : "Use the top navigation to sign in and unlock your personalized fitness journey."
-          }
-        </p> */}
       </motion.div>
     </motion.div>
   );

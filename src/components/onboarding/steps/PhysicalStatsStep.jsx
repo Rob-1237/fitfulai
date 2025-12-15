@@ -14,15 +14,7 @@ export default function PhysicalStatsStep({ data, updateData }) {
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
 
-  console.log('📏 PhysicalStatsStep data:', {
-    unitsPreference: data.unitsPreference,
-    height: data.unitsPreference === 'imperial' ? `${data.heightFeet}'${data.heightInches}"` : `${data.heightCm}cm`,
-    weight: data.unitsPreference === 'imperial' ? `${data.weightLbs}lbs` : `${data.weightKg}kg`
-  });
-
   const handleInputChange = (field, value) => {
-    console.log(`📏 PhysicalStatsStep: ${field} = ${value}`);
-
     // Clear error when user starts typing
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: null }));

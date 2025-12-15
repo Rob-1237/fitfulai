@@ -43,7 +43,6 @@ function collectFiles(dir, exts, maxSizeKB = 200) {
 async function analyzeProject(rootDir, userQuestion) {
   // Gather candidate files
   const files = collectFiles(rootDir, [".js", ".ts", ".jsx", ".tsx"]);
-  console.log(`Including ${files.length} files.`);
 
   // Build content string
   const filesContent = files
@@ -72,7 +71,7 @@ async function analyzeProject(rootDir, userQuestion) {
 const projectRoot = path.resolve("./src"); // adjust if needed
 
 analyzeProject(projectRoot, "Summarize the purpose of this codebase and flag any obvious issues.")
-  .then(output => console.log("\n=== AI Analysis ===\n", output))
+  .then(output => console.info("\n=== AI Analysis ===\n", output))
   .catch(err => console.error(err));
 
   /* ============================================================================

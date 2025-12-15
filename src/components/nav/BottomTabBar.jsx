@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import { motion } from 'framer-motion';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -17,21 +16,10 @@ const navigationItems = [
   { path: '/groceries', page: 'groceries', icon: faBasketShopping, label: 'Groceries' }
 ];
 
-const BottomTabBar = () => {
+const BottomTabBar = ({ isDark }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { closeDrawer } = useUIStore();
-
-  const [isDark, setIsDark] = useState(() => localStorage.getItem('theme') === 'dark');
-
-  useEffect(() => {
-    const handleStorageChange = () => {
-      setIsDark(localStorage.getItem('theme') === 'dark');
-    };
-    
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, []);
 
   const handleNavigation = (path) => {
     navigate(path);

@@ -59,13 +59,6 @@ export default function OnboardingWizard({ open, onClose }) {
 
   const progress = (currentStep / steps.length) * 100;
 
-  console.log('🧙‍♂️ OnboardingWizard state:', {
-    currentStep,
-    progress,
-    dataKeys: Object.keys(onboardingData),
-    isComplete: progress === 100
-  });
-
   // Auto-save with debounce
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -80,7 +73,6 @@ export default function OnboardingWizard({ open, onClose }) {
                          onboardingData.activityLevel;
 
       if (hasUserData) {
-        console.log('💾 Auto-saving onboarding data to localStorage');
         localStorage.setItem('onboarding_draft', JSON.stringify({
           ...onboardingData,
           lastSaved: Date.now(),
@@ -98,7 +90,6 @@ export default function OnboardingWizard({ open, onClose }) {
     if (draft) {
       try {
         const parsed = JSON.parse(draft);
-        console.log('📂 Loading onboarding draft from localStorage');
         setOnboardingData(parsed);
         setCurrentStep(parsed.currentStep || 1);
       } catch (error) {
@@ -108,7 +99,6 @@ export default function OnboardingWizard({ open, onClose }) {
   }, []);
 
   const updateData = (stepData) => {
-    console.log('📝 Updating onboarding data:', stepData);
     setOnboardingData(prev => ({ ...prev, ...stepData }));
   };
 
@@ -146,29 +136,23 @@ export default function OnboardingWizard({ open, onClose }) {
 
   const nextStep = () => {
     if (validateCurrentStep() && currentStep < steps.length) {
-      console.log(`➡️ Moving from step ${currentStep} to ${currentStep + 1}`);
       setCurrentStep(prev => prev + 1);
-    } else {
-      console.warn('⚠️ Cannot proceed - validation failed or at last step');
     }
   };
 
   const prevStep = () => {
     if (currentStep > 1) {
-      console.log(`⬅️ Moving from step ${currentStep} to ${currentStep - 1}`);
       setCurrentStep(prev => prev - 1);
     }
   };
 
   const skipStep = () => {
-    console.log(`⏭️ Skipping step ${currentStep}`);
     if (currentStep < steps.length) {
       setCurrentStep(prev => prev + 1);
     }
   };
 
   const handleClose = () => {
-    console.log('🚪 Closing onboarding wizard');
     onClose();
   };
 
@@ -248,8 +232,6 @@ export default function OnboardingWizard({ open, onClose }) {
                         isLoading={isLoading}
                         setIsLoading={setIsLoading}
                         onComplete={() => {
-                          console.log('🎊 Onboarding wizard completed, starting AI generation...');
-
                           // Store the completed user profile for generation
                           setCompletedUserProfile({
                             ...userProfile,
@@ -258,13 +240,9 @@ export default function OnboardingWizard({ open, onClose }) {
                             onboardingCompleted: true
                           });
 
-                          // Close onboarding modal first
-                          handleClose();
-
-                          // Then open generation modal after brief delay
-                          setTimeout(() => {
-                            setShowGenerationModal(true);
-                          }, 300);
+                          // Open generation modal immediately (don't close wizard yet)
+                          // The GenerationProgressModal will close the wizard when done
+                          setShowGenerationModal(true);
                         }}
                       />
                     )}
@@ -316,17 +294,14 @@ export default function OnboardingWizard({ open, onClose }) {
         isOpen={showGenerationModal}
         onClose={() => setShowGenerationModal(false)}
         onComplete={async (results) => {
-          console.log('🎉 AI generation completed:', results);
           setShowGenerationModal(false);
 
           // Clear draft data since onboarding is complete
           localStorage.removeItem('onboarding_draft');
 
-          // CRITICAL: Refresh userProfile in AuthContext to reflect onboarding completion
-          console.log('🔄 OnboardingWizard: Triggering AuthContext profile refresh...');
+          // Refresh userProfile in AuthContext to reflect onboarding completion
           try {
             await refreshUserProfile();
-            console.log('✅ OnboardingWizard: Profile refreshed, closing modal');
           } catch (error) {
             console.error('❌ Error refreshing profile:', error);
           }

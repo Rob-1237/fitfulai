@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -12,7 +12,7 @@ import {
   faSparkles
 } from '@fortawesome/pro-duotone-svg-icons';
 
-const GenerationProgressModal = ({ isOpen, onClose, onComplete, userProfile, isDark = false }) => {
+const GenerationProgressModal = ({ isOpen, onClose, onComplete, userProfile, isDark = false, forceRefresh = false }) => {
   const [currentStep, setCurrentStep] = useState(null);
   const [stepStatuses, setStepStatuses] = useState({
     meals: 'pending',
@@ -24,6 +24,7 @@ const GenerationProgressModal = ({ isOpen, onClose, onComplete, userProfile, isD
   const [generationResults, setGenerationResults] = useState(null);
 
   const navigate = useNavigate();
+  const hasStarted = useRef(false);
 
   const steps = [
     {
@@ -44,8 +45,20 @@ const GenerationProgressModal = ({ isOpen, onClose, onComplete, userProfile, isD
 
   // Start generation when modal opens
   useEffect(() => {
-    if (isOpen && userProfile && !isGenerating) {
+    if (isOpen && userProfile && !hasStarted.current) {
+      hasStarted.current = true;
       startGeneration();
+    }
+
+    // Reset when modal closes
+    if (!isOpen) {
+      hasStarted.current = false;
+      setIsGenerating(false);
+      setGenerationResults(null);
+      setStepStatuses({
+        meals: 'pending',
+        groceries: 'pending'
+      });
     }
   }, [isOpen, userProfile]);
 
@@ -61,18 +74,14 @@ const GenerationProgressModal = ({ isOpen, onClose, onComplete, userProfile, isD
 
   const startGeneration = async () => {
     setIsGenerating(true);
-    console.log('🚀 Starting complete plan generation...');
 
     try {
       // Dynamic import to avoid circular dependencies
       const { generateCompleteUserPlan } = await import('../../lib/parallelGenerator');
-
-      const result = await generateCompleteUserPlan(userProfile, handleProgress);
+      const result = await generateCompleteUserPlan(userProfile, handleProgress, forceRefresh);
 
       setGenerationResults(result);
-      console.log("result check:", result);
       if (result.success) {
-        console.log('🎉 All generations completed successfully');
         // Auto-close modal after a brief celebration
         setTimeout(() => {
           onComplete(result);
@@ -81,9 +90,6 @@ const GenerationProgressModal = ({ isOpen, onClose, onComplete, userProfile, isD
         setTimeout(() => {
           navigate('/dashboard');
         }, 2500);
-      } else {
-        console.log('⚠️ Some generations failed, showing results');
-        // Show results but don't auto-close
       }
 
     } catch (error) {

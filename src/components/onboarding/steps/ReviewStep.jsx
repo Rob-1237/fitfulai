@@ -4,7 +4,6 @@ import { initializeUserCollections } from '../../../lib/initializeCollections';
 
 export default function ReviewStep({ data, updateData, isLoading, setIsLoading, onComplete }) {
   const { user } = useAuth();
-  console.log('📋 ReviewStep data:', data);
 
   // Calculate BMR and TDEE
   const calculateMetrics = () => {
@@ -66,7 +65,6 @@ export default function ReviewStep({ data, updateData, isLoading, setIsLoading, 
 
   const handleCompleteOnboarding = async () => {
     setIsLoading(true);
-    console.log('🎉 Starting onboarding completion process...');
 
     try {
       // Calculate final metrics
@@ -111,8 +109,6 @@ export default function ReviewStep({ data, updateData, isLoading, setIsLoading, 
         onboardingCompleted: true
       };
 
-      console.log('💾 Initializing user collections with onboarding data:', completeOnboardingData);
-
       // Get user data for collection initialization
       const userData = {
         email: user.email,
@@ -123,8 +119,6 @@ export default function ReviewStep({ data, updateData, isLoading, setIsLoading, 
       const result = await initializeUserCollections(user.uid, userData, completeOnboardingData);
 
       if (result.success) {
-        console.log('✅ User collections initialized successfully!');
-
         // Update local data with calculated metrics
         updateData({
           bmr: finalMetrics.bmr,
@@ -136,9 +130,6 @@ export default function ReviewStep({ data, updateData, isLoading, setIsLoading, 
 
         // Clear draft data
         localStorage.removeItem('onboarding_draft');
-
-        console.log('🎊 Onboarding completed! User can now generate plans.');
-        console.log('🔥 All Firestore collections created: profiles, workouts, meals, groceries, aiCache');
 
         // DON'T close the wizard - let user stay on ReviewStep to click generate button
       } else {
@@ -160,7 +151,6 @@ export default function ReviewStep({ data, updateData, isLoading, setIsLoading, 
 
   const handleGeneratePlans = async () => {
     setIsLoading(true);
-    console.log('🚀 User clicked Generate Plans button!');
 
     try {
       // First complete the onboarding process (save to Firestore)
@@ -215,8 +205,6 @@ export default function ReviewStep({ data, updateData, isLoading, setIsLoading, 
       const result = await initializeUserCollections(user.uid, userData, completeOnboardingData);
 
       if (result.success) {
-        console.log('✅ User collections initialized successfully!');
-
         // Update local data with calculated metrics
         updateData({
           bmr: finalMetrics.bmr,
@@ -239,8 +227,6 @@ export default function ReviewStep({ data, updateData, isLoading, setIsLoading, 
           macros: finalMetrics.macros,
           onboardingCompleted: true
         };
-
-        console.log('🎊 Onboarding completed! Starting AI generation...');
 
         // Close the onboarding wizard and trigger AI generation
         if (onComplete) {

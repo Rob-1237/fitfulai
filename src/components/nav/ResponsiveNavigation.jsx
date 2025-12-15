@@ -2,12 +2,12 @@ import { useUIStore } from '../../stores/useUIStore';
 import BottomTabBar from './BottomTabBar';
 import SidebarDrawer from './SideBarDrawer';
 
-const ResponsiveNavigation = () => {
+const ResponsiveNavigation = ({ isDark }) => {
   const { isMobile } = useUIStore();
 
   return (
     <>
-      {isMobile ? <BottomTabBar /> : <SidebarDrawer />}
+      {isMobile ? <BottomTabBar isDark={isDark} /> : <SidebarDrawer isDark={isDark} />}
     </>
   );
 };

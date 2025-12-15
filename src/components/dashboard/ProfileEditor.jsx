@@ -5,6 +5,7 @@ import { faUtensils, faSave, faRefresh, faPlus, faTimes } from '@fortawesome/pro
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { useAuth } from '../../hooks/useAuth';
+import { canRegenerate, getRegenerationMessage } from '../../lib/regenerationLimits';
 
 const DIETARY_RESTRICTIONS = [
   { id: 'vegetarian', label: 'Vegetarian' },
@@ -33,7 +34,7 @@ export default function ProfileEditor({ isDark, onRegenerateClick }) {
   useEffect(() => {
     if (userProfile) {
       setEditedData({
-        dietaryRestrictions: userProfile.dietaryRestrictions || [],
+        dietaryPreferences: userProfile.dietaryPreferences || [],
         allergies: userProfile.allergies || [],
         defaultServingSize: userProfile.defaultServingSize || 4
       });
@@ -42,25 +43,20 @@ export default function ProfileEditor({ isDark, onRegenerateClick }) {
 
   const handleSave = async () => {
     setIsSaving(true);
-    console.log('💾 ProfileEditor: Starting save with edited data:', editedData);
     try {
       // Update Firestore with recipe-relevant fields only
       const userRef = doc(db, 'users', user.uid);
       const updateData = {
-        dietaryRestrictions: editedData.dietaryRestrictions,
+        dietaryPreferences: editedData.dietaryPreferences,
         allergies: editedData.allergies,
         defaultServingSize: editedData.defaultServingSize,
         updatedAt: new Date()
       };
 
-      console.log('💾 ProfileEditor: Saving to Firestore:', updateData);
       await updateDoc(userRef, updateData);
-      console.log('✅ ProfileEditor: Saved successfully to Firestore');
 
       // Refresh user profile in context
-      console.log('🔄 ProfileEditor: Refreshing userProfile in context...');
       await refreshUserProfile();
-      console.log('✅ ProfileEditor: userProfile refreshed');
 
       setIsEditing(false);
       setHasUnsavedChanges(false);
@@ -75,16 +71,9 @@ export default function ProfileEditor({ isDark, onRegenerateClick }) {
   };
 
   const handleRegenerateClick = async () => {
-    console.log('🔄 ProfileEditor: Regenerate clicked, checking for unsaved changes...', {
-      isEditing,
-      hasUnsavedChanges
-    });
-
     // If user has unsaved changes, save them first
     if (isEditing && hasUnsavedChanges) {
-      console.log('💾 ProfileEditor: Unsaved changes detected, saving first...');
       await handleSave();
-      console.log('✅ ProfileEditor: Changes saved, now triggering regeneration');
     }
 
     // Trigger regeneration
@@ -94,7 +83,7 @@ export default function ProfileEditor({ isDark, onRegenerateClick }) {
   const handleCancel = () => {
     // Reset to original values
     setEditedData({
-      dietaryRestrictions: userProfile.dietaryRestrictions || [],
+      dietaryPreferences: userProfile.dietaryPreferences || [],
       allergies: userProfile.allergies || [],
       defaultServingSize: userProfile.defaultServingSize || 4
     });
@@ -110,12 +99,12 @@ export default function ProfileEditor({ isDark, onRegenerateClick }) {
   };
 
   const toggleRestriction = (restrictionId) => {
-    const currentRestrictions = editedData.dietaryRestrictions || [];
+    const currentRestrictions = editedData.dietaryPreferences || [];
     const newRestrictions = currentRestrictions.includes(restrictionId)
       ? currentRestrictions.filter(id => id !== restrictionId)
       : [...currentRestrictions, restrictionId];
 
-    setEditedData({ ...editedData, dietaryRestrictions: newRestrictions });
+    setEditedData({ ...editedData, dietaryPreferences: newRestrictions });
     setHasUnsavedChanges(true);
   };
 
@@ -225,7 +214,7 @@ export default function ProfileEditor({ isDark, onRegenerateClick }) {
                   onClick={() => toggleRestriction(restriction.id)}
                   className={`
                     px-4 py-3 rounded-lg border-2 transition-all text-sm font-medium
-                    ${editedData.dietaryRestrictions?.includes(restriction.id)
+                    ${editedData.dietaryPreferences?.includes(restriction.id)
                       ? 'border-green-500 bg-green-50 text-green-700'
                       : isDark
                       ? 'border-gray-600 bg-gray-700 text-gray-300 hover:border-gray-500'
@@ -241,8 +230,8 @@ export default function ProfileEditor({ isDark, onRegenerateClick }) {
             </div>
           ) : (
             <div className="flex flex-wrap gap-2">
-              {editedData.dietaryRestrictions?.length > 0 ? (
-                editedData.dietaryRestrictions?.map(id => {
+              {editedData.dietaryPreferences?.length > 0 ? (
+                editedData.dietaryPreferences?.map(id => {
                   const restriction = DIETARY_RESTRICTIONS.find(r => r.id === id);
                   return (
                     <span
@@ -397,17 +386,30 @@ export default function ProfileEditor({ isDark, onRegenerateClick }) {
           )}
         </div>
 
-        {/* Regenerate Plans Button */}
-        <motion.button
-          onClick={handleRegenerateClick}
-          disabled={isSaving}
-          className="w-full py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-semibold text-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-300 shadow-lg flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
-          whileHover={{ scale: isSaving ? 1 : 1.02 }}
-          whileTap={{ scale: isSaving ? 1 : 0.98 }}
-        >
-          <FontAwesomeIcon icon={faRefresh} className="text-xl" />
-          {isSaving ? 'Saving Changes...' : 'Regenerate All Plans'}
-        </motion.button>
+        {/* Regenerate Plans Button - Only show after edits are made */}
+        {hasUnsavedChanges && (
+          <div>
+            {/* Regeneration limit info */}
+            {userProfile && (
+              <div className={`text-sm text-center mb-3 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                {getRegenerationMessage(userProfile)}
+              </div>
+            )}
+
+            <motion.button
+              onClick={handleRegenerateClick}
+              disabled={isSaving || !canRegenerate(userProfile)}
+              className="w-full py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-semibold text-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-300 shadow-lg flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
+              whileHover={{ scale: (isSaving || !canRegenerate(userProfile)) ? 1 : 1.02 }}
+              whileTap={{ scale: (isSaving || !canRegenerate(userProfile)) ? 1 : 0.98 }}
+            >
+              <FontAwesomeIcon icon={faRefresh} className="text-xl" />
+              {isSaving ? 'Saving Changes...' :
+               !canRegenerate(userProfile) ? 'Regeneration Limit Reached' :
+               'Regenerate All Plans'}
+            </motion.button>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -40,7 +40,7 @@ const filesToCheck = ["./src/App.js", "./src/components/Header.js"];
 
 // Use cases: “Show me how App.js and Header.js connect” or “Spot inconsistencies across these three files.”
 analyzeFiles(filesToCheck, "How do these files interact?")
-  .then(output => console.log("\n=== Multi-File Analysis ===\n", output))
+  .then(output => console.info("\n=== Multi-File Analysis ===\n", output))
   .catch(err => console.error(err));
 
 

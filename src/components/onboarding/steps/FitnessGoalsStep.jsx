@@ -1,11 +1,6 @@
 import { motion } from 'framer-motion';
 
 export default function FitnessGoalsStep({ data, updateData }) {
-  console.log('🎯 FitnessGoalsStep data:', {
-    fitnessGoal: data.fitnessGoal,
-    activityLevel: data.activityLevel
-  });
-
   const fitnessGoals = [
     { value: 'weight_loss', label: 'Lose Weight', emoji: '📉', desc: 'Burn fat and get leaner' },
     { value: 'muscle_gain', label: 'Build Muscle', emoji: '💪', desc: 'Increase strength and size' },

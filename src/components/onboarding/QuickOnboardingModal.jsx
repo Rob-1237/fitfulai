@@ -64,19 +64,17 @@ const QuickOnboardingModal = ({ open, onClose, onComplete }) => {
       // Update user profile with onboarding data
       const userRef = doc(db, 'users', user.uid);
       await updateDoc(userRef, {
-        dietaryRestrictions: selectedRestrictions,
+        dietaryPreferences: selectedRestrictions,
         allergies: allergies,
         defaultServingSize: servingSize,
         onboardingCompleted: true,
         updatedAt: new Date()
       });
 
-      console.log('✅ Onboarding completed successfully');
-
       // Call completion handler
       if (onComplete) {
         await onComplete({
-          dietaryRestrictions: selectedRestrictions,
+          dietaryPreferences: selectedRestrictions,
           allergies: allergies,
           defaultServingSize: servingSize
         });

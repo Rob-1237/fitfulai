@@ -7,30 +7,54 @@ import {
   faListCheck,
   faMapMarkerAlt,
   faCheck,
-  faShoppingCart
+  faPlus
 } from '@fortawesome/pro-duotone-svg-icons';
-import { getUserGroceryLists, getCurrentWeekData } from '../../lib/firestoreQueries';
+import { getUserGroceryLists, getCurrentWeekData, getWeekData } from '../../lib/firestoreQueries';
 import { useAuth } from '../../hooks/useAuth';
+import { useWeekContext } from '../../hooks/useWeekContext';
+import WeekSelector from '../ui/WeekSelector';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
+import { Dialog } from '@headlessui/react';
+import { X } from 'lucide-react';
 
 export default function GroceriesContent({ isDark }) {
   const location = useLocation();
   const { user } = useAuth();
+
+  // Week navigation context
+  const weekContext = useWeekContext('sunday');
+  const {
+    selectedWeek,
+    isCurrentWeek,
+    isPastWeek,
+    isFutureWeek,
+    weekDisplay,
+    canGoToPrevWeek,
+    goToNextWeek,
+    goToPrevWeek,
+    goToCurrentWeek
+  } = weekContext;
+
   const [groceryLists, setGroceryLists] = useState([]);
   const [currentWeekData, setCurrentWeekData] = useState(null);
+  const [selectedWeekData, setSelectedWeekData] = useState(null); // Data for selected week
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingWeek, setIsLoadingWeek] = useState(false); // Loading for week changes
   const [checkedItems, setCheckedItems] = useState([]);
   const [completedSections, setCompletedSections] = useState([]);
+  const [showAddItemModal, setShowAddItemModal] = useState(false);
+  const [customItemForm, setCustomItemForm] = useState({
+    name: '',
+    quantity: '',
+    category: 'other',
+    estimatedCost: ''
+  });
 
   useEffect(() => {
     const fetchGroceries = async () => {
       if (!user?.uid) return;
 
-      console.log('🛒 GroceriesContent: Refetch triggered - Starting fetch for user:', user.uid, {
-        pathname: location.pathname,
-        locationKey: location.key
-      });
       setIsLoading(true);
       try {
         // Bypass cache to get fresh data after generation
@@ -39,7 +63,6 @@ export default function GroceriesContent({ isDark }) {
           getCurrentWeekData(user.uid)
         ]);
 
-        console.log('🛒 GroceriesContent: Received grocery lists:', userGroceryLists);
         setGroceryLists(userGroceryLists);
         setCurrentWeekData(weekData);
       } catch (error) {
@@ -52,18 +75,44 @@ export default function GroceriesContent({ isDark }) {
     fetchGroceries();
   }, [user?.uid, location.pathname, location.key]);
 
+  // Fetch data for selected week when week changes
+  useEffect(() => {
+    const fetchSelectedWeekData = async () => {
+      if (!user?.uid || !selectedWeek) return;
+
+      setIsLoadingWeek(true);
+      try {
+        const weekData = await getWeekData(user.uid, selectedWeek);
+        setSelectedWeekData(weekData);
+      } catch (error) {
+        console.error('❌ Error fetching selected week grocery data:', error);
+      } finally {
+        setIsLoadingWeek(false);
+      }
+    };
+
+    fetchSelectedWeekData();
+  }, [user?.uid, selectedWeek]);
+
   // Derive current grocery list
   const currentGroceryList = currentWeekData?.groceryList || groceryLists[0];
 
-  // Load checked items from current grocery list
+  // Use current week's data when viewing current week, otherwise use selected week's data (or null for empty state)
+  const displayedGroceryList = isCurrentWeek ? currentGroceryList : (selectedWeekData?.groceryList || null);
+
+  // Load checked items from displayed grocery list
   useEffect(() => {
-    if (currentGroceryList?.checkedItems) {
-      setCheckedItems(currentGroceryList.checkedItems);
+    if (displayedGroceryList?.checkedItems) {
+      setCheckedItems(displayedGroceryList.checkedItems);
+    } else {
+      setCheckedItems([]);
     }
-    if (currentGroceryList?.completedSections) {
-      setCompletedSections(currentGroceryList.completedSections);
+    if (displayedGroceryList?.completedSections) {
+      setCompletedSections(displayedGroceryList.completedSections);
+    } else {
+      setCompletedSections([]);
     }
-  }, [currentGroceryList]);
+  }, [displayedGroceryList]);
 
   // Pantry tracking functions
   const toggleItemChecked = async (itemName, sectionName) => {
@@ -118,12 +167,12 @@ export default function GroceriesContent({ isDark }) {
 
   // Calculate remaining cost (excluding checked items)
   const calculateRemainingCost = () => {
-    if (!currentGroceryList?.sections) return currentGroceryList?.totalEstimatedCost || 0;
+    if (!displayedGroceryList?.sections) return { totalCost: 0, remainingCost: 0 };
 
     let totalCost = 0;
     let remainingCost = 0;
 
-    Object.values(currentGroceryList.sections).forEach(section => {
+    Object.values(displayedGroceryList.sections).forEach(section => {
       section.items.forEach(item => {
         totalCost += item.estimatedCost || 0;
         const itemName = item.item.split(' (')[0]; // Remove quantity from name
@@ -133,7 +182,58 @@ export default function GroceriesContent({ isDark }) {
       });
     });
 
+    // Add custom items to cost
+    const customItems = displayedGroceryList?.customItems || [];
+    customItems.forEach(item => {
+      const cost = parseFloat(item.estimatedCost) || 0;
+      totalCost += cost;
+      if (!checkedItems.includes(item.name)) {
+        remainingCost += cost;
+      }
+    });
+
     return { totalCost, remainingCost };
+  };
+
+  // Add custom item to grocery list
+  const handleAddCustomItem = async () => {
+    if (!customItemForm.name.trim() || !currentGroceryList?.id) return;
+
+    try {
+      const customItems = currentGroceryList.customItems || [];
+      const newItem = {
+        name: customItemForm.name.trim(),
+        quantity: customItemForm.quantity.trim() || '1',
+        category: customItemForm.category,
+        estimatedCost: parseFloat(customItemForm.estimatedCost) || 0,
+        addedAt: new Date().toISOString(),
+        isCustom: true
+      };
+
+      const updatedCustomItems = [...customItems, newItem];
+
+      // Update Firestore
+      const groceryRef = doc(db, 'groceries', currentGroceryList.id);
+      await updateDoc(groceryRef, {
+        customItems: updatedCustomItems,
+        updatedAt: new Date()
+      });
+
+      // Update local state
+      setGroceryLists(prevLists =>
+        prevLists.map(list =>
+          list.id === currentGroceryList.id
+            ? { ...list, customItems: updatedCustomItems }
+            : list
+        )
+      );
+
+      // Reset form and close modal
+      setCustomItemForm({ name: '', quantity: '', category: 'other', estimatedCost: '' });
+      setShowAddItemModal(false);
+    } catch (error) {
+      console.error('Error adding custom item:', error);
+    }
   };
 
   if (isLoading) {
@@ -164,7 +264,7 @@ export default function GroceriesContent({ isDark }) {
     );
   }
 
-  const isPlaceholder = currentGroceryList?.type === 'placeholder';
+  const isPlaceholder = displayedGroceryList?.type === 'placeholder';
 
   // Sample grocery data structure (fallback)
   const sampleItems = [
@@ -192,19 +292,71 @@ export default function GroceriesContent({ isDark }) {
     }));
   };
 
-  const groceryItems = currentGroceryList?.sections ?
-    transformGroceryData(currentGroceryList) : sampleItems;
+  const groceryItems = displayedGroceryList?.sections ?
+    transformGroceryData(displayedGroceryList) : sampleItems;
 
   // Calculate costs
   const { totalCost, remainingCost } = calculateRemainingCost();
 
   return (
     <div className="max-w-6xl mx-auto">
-      {/* Current Week Section */}
-      {currentGroceryList && (
+      {/* Week Navigation */}
+      <WeekSelector
+        weekDisplay={weekDisplay}
+        isCurrentWeek={isCurrentWeek}
+        isPastWeek={isPastWeek}
+        isFutureWeek={isFutureWeek}
+        canGoToPrevWeek={canGoToPrevWeek}
+        goToNextWeek={goToNextWeek}
+        goToPrevWeek={goToPrevWeek}
+        goToCurrentWeek={goToCurrentWeek}
+        isDark={isDark}
+      />
+
+      {/* Selected Week Section */}
+      {isLoadingWeek ? (
+        <div className="flex items-center justify-center py-12">
+          <div className="flex items-center space-x-3">
+            <svg className="animate-spin h-6 w-6 text-orange-500" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+            </svg>
+            <span className={isDark ? 'text-gray-300' : 'text-gray-700'}>Loading grocery list...</span>
+          </div>
+        </div>
+      ) : !displayedGroceryList ? (
+        /* Empty State - No grocery list for this week */
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className={`p-12 text-center rounded-xl border ${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} shadow-lg`}
+        >
+          <div className="mb-4">
+            <FontAwesomeIcon icon={faBasketShopping} className={`w-16 h-16 ${isDark ? 'text-gray-600' : 'text-gray-300'}`} />
+          </div>
+          <h3 className={`text-xl font-semibold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+            No Grocery List for This Week
+          </h3>
+          <p className={`mb-6 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+            {isFutureWeek
+              ? 'This week hasn\'t been planned yet. Grocery lists are generated with meal plans.'
+              : isPastWeek
+              ? 'No grocery list was generated for this week.'
+              : 'Generate a meal plan to create your grocery list!'}
+          </p>
+          {isCurrentWeek && (
+            <a
+              href="/dashboard"
+              className="inline-block px-6 py-3 bg-orange-500 text-white rounded-lg font-medium hover:bg-orange-600 transition-colors"
+            >
+              Generate Meal Plan
+            </a>
+          )}
+        </motion.div>
+      ) : (
         <div className="mb-8">
           <h2 className={`text-2xl font-bold mb-6 ${isDark ? 'text-white' : 'text-gray-900'}`}>
-            {isPlaceholder ? 'Sample Grocery Structure' : 'This Week\'s Grocery List'}
+            {isPlaceholder ? 'Sample Grocery Structure' : (isCurrentWeek ? 'This Week\'s Grocery List' : 'Week Overview')}
           </h2>
 
           <div className="grid lg:grid-cols-3 gap-6">
@@ -220,7 +372,7 @@ export default function GroceriesContent({ isDark }) {
                     Shopping List
                   </h3>
                   <p className={`text-sm mt-1 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
-                    Week of {currentGroceryList.weekStartDate?.replace(/_/g, '/') || new Date().toLocaleDateString()}
+                    Week of {displayedGroceryList.weekStartDate?.replace(/_/g, '/') || new Date().toLocaleDateString()}
                   </p>
                 </div>
                 {isPlaceholder && (
@@ -266,15 +418,56 @@ export default function GroceriesContent({ isDark }) {
                     </div>
                   </div>
                 ))}
+
+                {/* Custom Items Section */}
+                {currentGroceryList?.customItems && currentGroceryList.customItems.length > 0 && (
+                  <div>
+                    <div className="flex items-center space-x-2 mb-3">
+                      <div className={`w-3 h-3 rounded-full bg-gray-500`}></div>
+                      <h4 className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                        My Custom Items ({currentGroceryList.customItems.length} items)
+                      </h4>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 ml-5">
+                      {currentGroceryList.customItems.map((item, itemIndex) => {
+                        const isChecked = checkedItems.includes(item.name);
+                        return (
+                          <div
+                            key={itemIndex}
+                            className={`flex items-center space-x-2 p-2 rounded ${isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-50'} cursor-pointer transition-colors`}
+                            onClick={() => toggleItemChecked(item.name, 'custom')}
+                          >
+                            <button className={`w-5 h-5 border-2 rounded ${isDark ? 'border-gray-600 hover:border-green-500' : 'border-gray-300 hover:border-green-500'} flex items-center justify-center ${isChecked ? 'bg-green-500 border-green-500' : ''}`}>
+                              <FontAwesomeIcon
+                                icon={faCheck}
+                                className={`text-white text-xs ${isChecked ? 'opacity-100' : 'opacity-0'}`}
+                              />
+                            </button>
+                            <span className={`text-sm ${isChecked ? 'line-through opacity-50' : ''} ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                              {item.name} ({item.quantity})
+                              {isChecked && <span className="ml-2 text-xs text-green-600">✓ In Pantry</span>}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
 
+              {/* Add Custom Item Button */}
               <motion.button
-                className="w-full mt-6 bg-green-600 text-white py-3 rounded-lg font-medium hover:bg-green-700 transition-colors flex items-center justify-center space-x-2"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
+                onClick={() => setShowAddItemModal(true)}
+                className={`w-full mt-4 py-3 rounded-lg border-2 border-dashed ${
+                  isDark
+                    ? 'border-gray-600 hover:border-gray-500 text-gray-400 hover:text-gray-300'
+                    : 'border-gray-300 hover:border-gray-400 text-gray-600 hover:text-gray-700'
+                } transition-colors flex items-center justify-center space-x-2`}
+                whileHover={{ scale: 1.01 }}
+                whileTap={{ scale: 0.99 }}
               >
-                <FontAwesomeIcon icon={faShoppingCart} />
-                <span>{isPlaceholder ? 'Preview Shopping Mode' : 'Start Shopping'}</span>
+                <FontAwesomeIcon icon={faPlus} />
+                <span>Add Custom Item</span>
               </motion.button>
             </motion.div>
 
@@ -485,6 +678,169 @@ export default function GroceriesContent({ isDark }) {
             Generate My First Grocery List
           </button>
         </motion.div>
+      )}
+
+      {/* Add Custom Item Modal */}
+      {showAddItemModal && (
+        <Dialog
+          open={showAddItemModal}
+          onClose={() => setShowAddItemModal(false)}
+          className="relative z-50"
+        >
+          <motion.div
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            aria-hidden="true"
+          />
+
+          <div className="fixed inset-0 flex items-center justify-center p-4">
+            <Dialog.Panel
+              as={motion.div}
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className={`w-full max-w-md rounded-xl ${
+                isDark ? 'bg-gray-800' : 'bg-white'
+              } shadow-2xl`}
+            >
+              {/* Header */}
+              <div className={`flex items-center justify-between p-6 border-b ${
+                isDark ? 'border-gray-700' : 'border-gray-200'
+              }`}>
+                <Dialog.Title className={`text-xl font-semibold ${
+                  isDark ? 'text-white' : 'text-gray-900'
+                }`}>
+                  Add Custom Item
+                </Dialog.Title>
+                <button
+                  onClick={() => setShowAddItemModal(false)}
+                  className={`p-2 rounded-lg transition-colors ${
+                    isDark
+                      ? 'hover:bg-gray-700 text-gray-400 hover:text-white'
+                      : 'hover:bg-gray-100 text-gray-500 hover:text-gray-900'
+                  }`}
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Form */}
+              <div className="p-6 space-y-4">
+                <div>
+                  <label className={`block text-sm font-medium mb-2 ${
+                    isDark ? 'text-gray-200' : 'text-gray-700'
+                  }`}>
+                    Item Name *
+                  </label>
+                  <input
+                    type="text"
+                    value={customItemForm.name}
+                    onChange={(e) => setCustomItemForm({ ...customItemForm, name: e.target.value })}
+                    placeholder="e.g., Avocados"
+                    className={`w-full px-3 py-2 rounded-lg border ${
+                      isDark
+                        ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
+                        : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                    } focus:outline-none focus:ring-2 focus:ring-green-500`}
+                    autoFocus
+                  />
+                </div>
+
+                <div>
+                  <label className={`block text-sm font-medium mb-2 ${
+                    isDark ? 'text-gray-200' : 'text-gray-700'
+                  }`}>
+                    Quantity
+                  </label>
+                  <input
+                    type="text"
+                    value={customItemForm.quantity}
+                    onChange={(e) => setCustomItemForm({ ...customItemForm, quantity: e.target.value })}
+                    placeholder="e.g., 2 count"
+                    className={`w-full px-3 py-2 rounded-lg border ${
+                      isDark
+                        ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
+                        : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                    } focus:outline-none focus:ring-2 focus:ring-green-500`}
+                  />
+                </div>
+
+                <div>
+                  <label className={`block text-sm font-medium mb-2 ${
+                    isDark ? 'text-gray-200' : 'text-gray-700'
+                  }`}>
+                    Category
+                  </label>
+                  <select
+                    value={customItemForm.category}
+                    onChange={(e) => setCustomItemForm({ ...customItemForm, category: e.target.value })}
+                    className={`w-full px-3 py-2 rounded-lg border ${
+                      isDark
+                        ? 'bg-gray-700 border-gray-600 text-white'
+                        : 'bg-white border-gray-300 text-gray-900'
+                    } focus:outline-none focus:ring-2 focus:ring-green-500`}
+                  >
+                    <option value="produce">Produce</option>
+                    <option value="proteins">Proteins</option>
+                    <option value="dairy">Dairy</option>
+                    <option value="pantry">Pantry</option>
+                    <option value="frozen">Frozen</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className={`block text-sm font-medium mb-2 ${
+                    isDark ? 'text-gray-200' : 'text-gray-700'
+                  }`}>
+                    Estimated Cost
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={customItemForm.estimatedCost}
+                    onChange={(e) => setCustomItemForm({ ...customItemForm, estimatedCost: e.target.value })}
+                    placeholder="e.g., 3.99"
+                    className={`w-full px-3 py-2 rounded-lg border ${
+                      isDark
+                        ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
+                        : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                    } focus:outline-none focus:ring-2 focus:ring-green-500`}
+                  />
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className={`flex justify-end gap-3 p-6 border-t ${
+                isDark ? 'border-gray-700' : 'border-gray-200'
+              }`}>
+                <button
+                  onClick={() => setShowAddItemModal(false)}
+                  className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                    isDark
+                      ? 'bg-gray-700 text-white hover:bg-gray-600'
+                      : 'bg-gray-200 text-gray-900 hover:bg-gray-300'
+                  }`}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleAddCustomItem}
+                  disabled={!customItemForm.name.trim()}
+                  className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                    !customItemForm.name.trim()
+                      ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                      : 'bg-green-600 text-white hover:bg-green-700'
+                  }`}
+                >
+                  Add Item
+                </button>
+              </div>
+            </Dialog.Panel>
+          </div>
+        </Dialog>
       )}
     </div>
   );

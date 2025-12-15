@@ -12,12 +12,6 @@ function Meals({ isDark }) {
     // Single state logic
     const userState = user && userProfile?.onboardingCompleted ? "onboarded" : user ? "logged" : "unlogged";
 
-    console.log('🍽️ Meals page - userState:', userState, {
-        hasUser: !!user,
-        hasProfile: !!userProfile,
-        onboardingCompleted: userProfile?.onboardingCompleted
-    });
-
     // Handle splash screen timing
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -229,17 +223,6 @@ function Meals({ isDark }) {
                     </ul>
                 </div>
             </div>
-
-            {/* CTA Button */}
-            {/* <div className="text-center">
-                <motion.button
-                    className="bg-orange-600 text-white px-8 py-4 rounded-lg font-semibold text-lg hover:bg-orange-700 transition-colors"
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                >
-                    Get Started with Your Meal Plan
-                </motion.button>
-            </div> */}
         </div>
     );
 
@@ -264,36 +247,9 @@ function Meals({ isDark }) {
                     >
                         {/* Header Section */}
                         <div className="p-8">
-                            {/* <motion.div
-                                className="flex items-center space-x-4 mb-8"
-                                initial={{ y: -20, opacity: 0 }}
-                                animate={{ y: 0, opacity: 1 }}
-                                transition={{ delay: 0.1, duration: 0.5 }}
-                            >
-                                <FontAwesomeIcon icon={faPlateUtensils} className="text-orange-500 text-3xl" />
-                                <div>
-                                    <h1 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-black'}`}>
-                                        Meals
-                                    </h1>
-                                    <p className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
-                                        State: {userState}
-                                    </p>
-                                </div>
-                            </motion.div> */}
-
-                            {/* Centered State Message - Only show for non-onboarded users */}
-                            {/* {userState !== "onboarded" && (
-                                <motion.div
-                                    className="text-center mb-12"
-                                    initial={{ y: 20, opacity: 0 }}
-                                    animate={{ y: 0, opacity: 1 }}
-                                    transition={{ delay: 0.3, duration: 0.5 }}
-                                >
-                                    <h2 className={`text-xl font-medium ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>
-                                        {getMessage()}
-                                    </h2>
-                                </motion.div>
-                            )} */}
+                            <h1 className={`text-4xl font-bold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                                Meals
+                            </h1>
                         </div>
 
                         {/* Content based on user state */}

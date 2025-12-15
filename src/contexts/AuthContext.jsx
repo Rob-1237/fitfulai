@@ -1,4 +1,4 @@
-import { createContext, useState, useEffect, useContext } from 'react';
+import { createContext, useState, useEffect, useContext, useMemo, useCallback } from 'react';
 import {
   onAuthStateChanged,
   signInWithEmailAndPassword,
@@ -37,14 +37,7 @@ export const AuthProvider = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
 
   // Helper function to create user document in Firestore
-  const createUserDocument = async (user, additionalData = {}) => {
-    console.log('🔥 createUserDocument called:', {
-      userId: user?.uid,
-      email: user?.email,
-      displayName: user?.displayName,
-      additionalData
-    });
-
+  const createUserDocument = useCallback(async (user, additionalData = {}) => {
     if (!user) {
       console.warn('⚠️ createUserDocument: No user provided');
       return;
@@ -52,10 +45,7 @@ export const AuthProvider = ({ children }) => {
 
     try {
       const userDocRef = doc(db, 'users', user.uid);
-      console.log('🔥 Checking if user document exists:', user.uid);
-
       const userDoc = await getDoc(userDocRef);
-      console.log('🔥 User document exists:', userDoc.exists());
 
       if (!userDoc.exists()) {
         const { email, displayName } = user;
@@ -70,13 +60,18 @@ export const AuthProvider = ({ children }) => {
           onboardingCompleted: false,
 
           // Recipe and dietary preferences (will be filled during onboarding)
-          dietaryRestrictions: [],
+          dietaryPreferences: [],
           allergies: [],
           defaultServingSize: 4,
 
           // AI usage tracking
           aiGenerationsUsed: 0,
           aiGenerationsReset: serverTimestamp(),
+
+          // Regeneration limits (set after onboarding completes)
+          regenerationsThisWeek: null, // Will be set to 3 after onboarding
+          regenerationResetDate: null, // Will be set to next Sunday after onboarding
+          weeklyRegenerationLimit: 3,
 
           // Subscription info
           tier: 'free',
@@ -93,11 +88,7 @@ export const AuthProvider = ({ children }) => {
           ...additionalData
         };
 
-        console.log('🔥 Creating user document with data:', userData);
         await setDoc(userDocRef, userData);
-        console.log('✅ User document created successfully');
-      } else {
-        console.log('📄 User document already exists, skipping creation');
       }
 
       return userDocRef;
@@ -110,12 +101,10 @@ export const AuthProvider = ({ children }) => {
       });
       throw error;
     }
-  };
+  }, []); // No dependencies - pure function
 
   // Helper function to fetch user profile
-  const fetchUserProfile = async (uid) => {
-    console.log('🔍 fetchUserProfile called for uid:', uid);
-
+  const fetchUserProfile = useCallback(async (uid) => {
     if (!uid) {
       console.warn('⚠️ fetchUserProfile: No uid provided');
       return null;
@@ -123,24 +112,10 @@ export const AuthProvider = ({ children }) => {
 
     try {
       const userDocRef = doc(db, 'users', uid);
-      console.log('🔍 Fetching user document from Firestore...');
-
       const userDoc = await getDoc(userDocRef);
-      console.log('🔍 User document fetch result:', {
-        exists: userDoc.exists(),
-        id: userDoc.id
-      });
 
       if (userDoc.exists()) {
-        const profileData = { id: userDoc.id, ...userDoc.data() };
-        console.log('✅ User profile fetched successfully:', {
-          id: profileData.id,
-          email: profileData.email,
-          name: profileData.name,
-          onboardingCompleted: profileData.onboardingCompleted,
-          tier: profileData.tier
-        });
-        return profileData;
+        return { id: userDoc.id, ...userDoc.data() };
       } else {
         console.warn('⚠️ User document does not exist in Firestore');
         return null;
@@ -154,12 +129,10 @@ export const AuthProvider = ({ children }) => {
       });
       return null;
     }
-  };
+  }, []); // No dependencies - pure function
 
   // Helper function to update user profile in Firestore
-  const updateUserProfile = async (profileData) => {
-    console.log('🔄 updateUserProfile called with:', profileData);
-
+  const updateUserProfile = useCallback(async (profileData) => {
     if (!user) {
       console.warn('⚠️ updateUserProfile: No user authenticated');
       throw new Error('No user authenticated');
@@ -167,23 +140,16 @@ export const AuthProvider = ({ children }) => {
 
     try {
       const userDocRef = doc(db, 'users', user.uid);
-      console.log('🔄 Updating user document in Firestore...');
-
       const updateData = {
         ...profileData,
         updatedAt: serverTimestamp()
       };
 
-      console.log('🔄 Update data:', updateData);
       await updateDoc(userDocRef, updateData);
-      console.log('✅ User profile updated successfully in Firestore');
 
       // Refresh the user profile data
-      console.log('🔄 Refetching user profile to update context state...');
       const updatedProfile = await fetchUserProfile(user.uid);
-      console.log('🔄 Updated profile received:', updatedProfile);
       setUserProfile(updatedProfile);
-      console.log('✅ Context state updated with new profile');
 
       return { success: true, error: null };
     } catch (error) {
@@ -195,103 +161,60 @@ export const AuthProvider = ({ children }) => {
       });
       return { success: false, error: error.message };
     }
-  };
+  }, [user, fetchUserProfile]); // Depends on user and fetchUserProfile
 
   // Set up Firebase auth state listener
   useEffect(() => {
-    console.log('🚀 AuthProvider: Setting up auth state listener...');
-
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      console.log('🔄 AuthProvider: Auth state changed:', {
-        userExists: !!user,
-        uid: user?.uid,
-        email: user?.email,
-        displayName: user?.displayName,
-        emailVerified: user?.emailVerified
-      });
-
       setUser(user);
 
       if (user) {
-        console.log('👤 AuthProvider: User is authenticated, fetching profile...');
-
         try {
-          // Fetch user profile from Firestore (created during signup)
-          console.log('🔍 AuthProvider: Fetching user profile...');
           const profile = await fetchUserProfile(user.uid);
           setUserProfile(profile);
-
-          console.log('✅ AuthProvider: User setup complete:', {
-            hasProfile: !!profile,
-            onboardingCompleted: profile?.onboardingCompleted
-          });
         } catch (error) {
-          console.error('❌ AuthProvider: Error during user setup:', error);
+          console.error('❌ Error during user setup:', error);
           setUserProfile(null);
         }
       } else {
-        console.log('🚫 AuthProvider: User not authenticated, clearing profile');
         setUserProfile(null);
       }
 
       setIsLoading(false);
-      console.log('🔄 AuthProvider: Auth state processing complete, loading set to false');
     });
 
-    return () => {
-      console.log('🛑 AuthProvider: Cleaning up auth listener');
-      unsubscribe();
-    };
+    return () => unsubscribe();
   }, []);
 
   // Enhanced profile object combining Firebase user and Firestore profile
-  const profile = userProfile || (user ? {
-    id: user.uid,
-    email: user.email,
-    name: user.displayName || user.email?.split('@')[0] || 'User',
-    onboardingCompleted: false
-  } : null);
+  // CRITICAL: useMemo prevents infinite re-render loop by memoizing the object reference
+  const profile = useMemo(() => {
+    return userProfile || (user ? {
+      id: user.uid,
+      email: user.email,
+      name: user.displayName || user.email?.split('@')[0] || 'User',
+      onboardingCompleted: false
+    } : null);
+  }, [userProfile, user]);
 
-  const signUp = async (email, password, name) => {
-    console.log('📝 SIGNUP ATTEMPT STARTED');
-    console.log('📝 signUp called with:', {
-      email: email,
-      emailLength: email?.length,
-      passwordLength: password?.length,
-      name: name,
-      nameLength: name?.length
-    });
-
+  const signUp = useCallback(async (email, password, name) => {
     try {
-      // Validation logging
+      // Validation
       if (!email || !password) {
         console.warn('⚠️ Missing required fields');
         throw new Error('Email and password are required');
       }
 
-      console.log('📝 Creating Firebase Auth user...');
       const { user: newUser } = await createUserWithEmailAndPassword(auth, email, password);
-      console.log('✅ Firebase Auth user created successfully:', {
-        uid: newUser.uid,
-        email: newUser.email,
-        emailVerified: newUser.emailVerified
-      });
 
       // Update the user's display name
       if (name && newUser) {
-        console.log('📝 Updating display name...');
         await updateProfile(newUser, { displayName: name });
-        console.log('✅ Display name updated to:', name);
-      } else {
-        console.log('ℹ️ No name provided or user missing, skipping display name update');
       }
 
       // Create Firestore user document
-      console.log('📝 Creating Firestore user document...');
       await createUserDocument(newUser);
-      console.log('✅ Firestore user document created');
 
-      console.log('🎉 SIGNUP COMPLETED SUCCESSFULLY');
       return { success: true, error: null };
     } catch (error) {
       console.error('❌ SIGNUP FAILED');
@@ -305,34 +228,19 @@ export const AuthProvider = ({ children }) => {
       let errorMessage = error.message;
       if (error.code === 'auth/email-already-in-use') {
         errorMessage = 'An account with this email already exists';
-        console.log('⚠️ Error type: Email already in use');
       } else if (error.code === 'auth/invalid-email') {
         errorMessage = 'Please enter a valid email address';
-        console.log('⚠️ Error type: Invalid email format');
       } else if (error.code === 'auth/weak-password') {
         errorMessage = 'Password should be at least 6 characters';
-        console.log('⚠️ Error type: Weak password');
-      } else {
-        console.log('⚠️ Error type: Other -', error.code);
       }
 
-      console.log('📤 Returning error to UI:', errorMessage);
       return { success: false, error: errorMessage };
     }
-  };
+  }, [createUserDocument]); // Depends on createUserDocument
 
-  const signIn = async (email, password) => {
-    console.log('🔑 SIGNIN ATTEMPT STARTED');
-    console.log('🔑 signIn called with:', {
-      email: email,
-      emailLength: email?.length,
-      passwordLength: password?.length
-    });
-
+  const signIn = useCallback(async (email, password) => {
     try {
-      console.log('🔑 Authenticating with Firebase...');
       await signInWithEmailAndPassword(auth, email, password);
-      console.log('✅ SIGNIN SUCCESSFUL');
       return { success: true, error: null };
     } catch (error) {
       console.error('❌ SIGNIN FAILED');
@@ -350,35 +258,30 @@ export const AuthProvider = ({ children }) => {
         errorMessage = 'Please enter a valid email address';
       }
 
-      console.log('📤 Returning signin error to UI:', errorMessage);
       return { success: false, error: errorMessage };
     }
-  };
+  }, []); // No dependencies
 
-  const signOut = async () => {
-    console.log('🚪 SIGNOUT ATTEMPT STARTED');
-
+  const signOut = useCallback(async () => {
     try {
-      console.log('🚪 Signing out from Firebase...');
       await firebaseSignOut(auth);
-      console.log('✅ SIGNOUT SUCCESSFUL');
       return { success: true, error: null };
     } catch (error) {
       console.error('❌ SIGNOUT FAILED:', error);
       return { success: false, error: error.message };
     }
-  };
+  }, []); // No dependencies
 
-  const resetPassword = async (email) => {
+  const resetPassword = useCallback(async (email) => {
     try {
       await sendPasswordResetEmail(auth, email);
       return { success: true, error: null };
     } catch (error) {
       return { success: false, error: error.message };
     }
-  };
+  }, []); // No dependencies
 
-  const signInWithGoogle = async () => {
+  const signInWithGoogle = useCallback(async () => {
     try {
       const provider = new GoogleAuthProvider();
       await signInWithPopup(auth, provider);
@@ -386,25 +289,23 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       return { success: false, error: error.message };
     }
-  };
+  }, []); // No dependencies
 
   // Helper function to refresh user profile (for after onboarding, etc.)
-  const refreshUserProfile = async () => {
-    console.log('🔄 refreshUserProfile called');
+  const refreshUserProfile = useCallback(async () => {
     if (!user?.uid) {
       console.warn('⚠️ Cannot refresh profile: no user logged in');
       return null;
     }
 
-    console.log('🔄 Fetching fresh user profile from Firestore...');
     const freshProfile = await fetchUserProfile(user.uid);
     setUserProfile(freshProfile);
-    console.log('✅ UserProfile refreshed in AuthContext:', freshProfile);
     return freshProfile;
-  };
+  }, [user?.uid]);
 
-  // Context value
-  const value = {
+  // Context value - CRITICAL: useMemo prevents infinite re-render loop
+  // Memoize to ensure the value object only changes when dependencies actually change
+  const value = useMemo(() => ({
     profile,
     userProfile,
     user,
@@ -422,7 +323,21 @@ export const AuthProvider = ({ children }) => {
     fetchUserProfile,
     updateUserProfile,
     refreshUserProfile  // NEW: Expose refresh function
-  };
+  }), [
+    profile,
+    userProfile,
+    user,
+    isLoading,
+    signUp,
+    signIn,
+    signOut,
+    resetPassword,
+    signInWithGoogle,
+    createUserDocument,
+    fetchUserProfile,
+    updateUserProfile,
+    refreshUserProfile
+  ]);
 
   return (
     <AuthContext.Provider value={value}>

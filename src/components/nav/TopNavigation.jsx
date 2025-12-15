@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, memo } from 'react';
 import { motion } from 'framer-motion';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUser, faSignIn, faSignOut, faCog } from '@fortawesome/pro-duotone-svg-icons';
@@ -6,53 +6,26 @@ import { useAuth } from '../../hooks/useAuth';
 import { useUIStore } from '../../stores/useUIStore';
 import SettingsModal from '../modals/SettingsModal';
 import EditAccountModal from '../modals/EditAccountModal';
-import QuickOnboardingModal from '../onboarding/QuickOnboardingModal';
-import GenerationProgressModal from '../generation/GenerationProgressModal';
+import OnboardingWizard from '../onboarding/OnboardingWizard';
 
-const TopNavigation = ({ isDark, isMobile, onboarded }) => {
+const TopNavigation = memo(({ isDark, isMobile, onboarded }) => {
   const { user, userProfile, signOut, refreshUserProfile } = useAuth();
   const { openModal, closeModal, modals } = useUIStore();
   const [showOnboardingModal, setShowOnboardingModal] = useState(false);
-  const [showGenerationModal, setShowGenerationModal] = useState(false);
 
-  console.log("isMobile value: ", isMobile);
   // Single state logic
   const userState = user && userProfile?.onboardingCompleted ? "onboarded" : user ? "logged" : "unlogged";
 
   const handleSignIn = () => {
-    console.log('🔝 Opening auth modal');
     openModal('auth');
   };
 
   const handleGetStarted = () => {
-    console.log('🔝 Opening quick onboarding modal');
     setShowOnboardingModal(true);
-  };
-
-  const handleOnboardingComplete = async (data) => {
-    console.log('🔝 Onboarding completed with data:', data);
-
-    // Close onboarding modal
-    setShowOnboardingModal(false);
-
-    // Refresh user profile to get updated onboarding status
-    if (refreshUserProfile) {
-      await refreshUserProfile();
-    }
-
-    // Trigger automatic meal plan generation
-    console.log('🚀 Triggering automatic plan generation based on:', data);
-    setShowGenerationModal(true);
-  };
-
-  const handleGenerationComplete = (results) => {
-    console.log('🎉 TopNavigation: Generation completed with results:', results);
-    setShowGenerationModal(false);
   };
 
   const handleSignOut = async () => {
     try {
-      console.log('🔝 Signing out user');
       await signOut();
     } catch (error) {
       console.error("Error Signing Out: ", error);
@@ -116,12 +89,13 @@ const TopNavigation = ({ isDark, isMobile, onboarded }) => {
         {renderCTA()}
       </div>
 
-      {/* Quick Onboarding Modal */}
-      <QuickOnboardingModal
-        open={showOnboardingModal}
-        onClose={() => setShowOnboardingModal(false)}
-        onComplete={handleOnboardingComplete}
-      />
+      {/* Full Onboarding Wizard - Only render when actually needed */}
+      {showOnboardingModal && (
+        <OnboardingWizard
+          open={showOnboardingModal}
+          onClose={() => setShowOnboardingModal(false)}
+        />
+      )}
 
       {/* Settings Modal */}
       <SettingsModal
@@ -135,33 +109,15 @@ const TopNavigation = ({ isDark, isMobile, onboarded }) => {
         onClose={() => closeModal('editAccount')}
         isDark={isDark}
       />
-
-      {/* Generation Progress Modal */}
-      <GenerationProgressModal
-        isOpen={showGenerationModal}
-        onClose={() => setShowGenerationModal(false)}
-        onComplete={handleGenerationComplete}
-        userProfile={userProfile}
-        isDark={isDark}
-      />
     </div>
   );
-};
+});
 
 const UserProfileCircle = ({ isDark, onSignOut }) => {
   const { user, userProfile } = useAuth();
   const { openModal } = useUIStore();
   const userName = userProfile?.name || user?.displayName || user?.email?.split('@')[0] || 'User';
   const userInitials = userName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
-
-  // Debug logging to track re-renders with updated profile
-  useEffect(() => {
-    console.log('👤 UserProfileCircle: Profile updated', {
-      userName,
-      userInitials,
-      profileName: userProfile?.name
-    });
-  }, [userProfile?.name, userName, userInitials]);
 
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
@@ -271,5 +227,7 @@ const UserProfileCircle = ({ isDark, onSignOut }) => {
     </div>
   );
 };
+
+TopNavigation.displayName = 'TopNavigation';
 
 export default TopNavigation;

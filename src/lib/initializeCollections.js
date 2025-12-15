@@ -4,9 +4,11 @@ import {
   setDoc,
   serverTimestamp,
   getDoc,
-  Timestamp
+  Timestamp,
+  updateDoc
 } from 'firebase/firestore';
 import { db } from './firebase';
+import { initializeRegenerationLimits } from './regenerationLimits';
 
 /**
  * Initialize all Firestore collections for a new user
@@ -16,19 +18,70 @@ import { db } from './firebase';
  * @param {Object} onboardingData - Data collected during onboarding
  */
 export const initializeUserCollections = async (userId, userData, onboardingData = {}) => {
-  console.log('📋 Initializing collections for user:', userId);
+  console.log('📋 Initializing/updating collections for user:', userId);
 
   try {
-    // Check if user already has collections initialized
     const profileRef = doc(db, 'users', userId);
     const profileDoc = await getDoc(profileRef);
 
     if (profileDoc.exists()) {
-      console.log(' User collections already initialized');
-      return { success: true, message: 'Collections already exist' };
+      console.log('⚠️ Profile exists - UPDATING with onboarding data');
+
+      // Update existing profile with onboarding data
+      const updateData = {
+        // Physical characteristics
+        age: onboardingData.age,
+        gender: onboardingData.gender,
+        unitsPreference: onboardingData.unitsPreference,
+        weightLbs: onboardingData.weightLbs,
+        weightKg: onboardingData.weightKgs,
+        heightInches: onboardingData.heightInches,
+        heightCm: onboardingData.heightCentimeters,
+
+        // Fitness goals and activity
+        fitnessGoal: onboardingData.fitnessGoal,
+        activityLevel: onboardingData.activityLevel,
+
+        // Calculated nutrition targets
+        bmr: onboardingData.bmr,
+        tdee: onboardingData.tdee,
+        calorieTarget: onboardingData.calorieTarget,
+        macros: onboardingData.macros,
+
+        // Dietary preferences
+        dietaryPreferences: onboardingData.dietaryPreferences || [],
+        allergies: onboardingData.allergies || [],
+
+        // User preferences
+        preferences: onboardingData.preferences,
+        timezone: onboardingData.timezone,
+
+        // CRITICAL: Mark onboarding as complete
+        onboardingCompleted: true,
+
+        // Initialize regeneration limits (3 per week, resets on Sundays)
+        ...initializeRegenerationLimits(3),
+
+        // Update timestamp
+        updatedAt: serverTimestamp()
+      };
+
+      // Remove undefined values to avoid Firestore errors
+      Object.keys(updateData).forEach(key => {
+        if (updateData[key] === undefined) {
+          delete updateData[key];
+        }
+      });
+
+      console.log('💾 Updating profile with data:', updateData);
+      await updateDoc(profileRef, updateData);
+      console.log('✅ Profile updated with onboarding data');
+
+      return { success: true, message: 'Profile updated with onboarding data' };
     }
 
-    // Create all collections in parallel for performance
+    // Create all collections for new users
+    console.log('🆕 New user - creating all collections');
     await Promise.all([
       createUserProfile(userId, userData, onboardingData),
       createMealsCollection(userId),
@@ -36,29 +89,49 @@ export const initializeUserCollections = async (userId, userData, onboardingData
       initializeAiCache(userId)
     ]);
 
-    console.log(' All collections initialized successfully');
+    console.log('✅ All collections initialized successfully');
     return { success: true, message: 'Collections initialized' };
 
   } catch (error) {
-    console.error('L Error initializing collections:', error);
+    console.error('❌ Error initializing collections:', error);
     return { success: false, error: error.message };
   }
 };
 
 /**
- * Create user profile document with simplified recipe-focused fields
- * No body metrics - focuses on dietary needs and serving preferences
+ * Create user profile document with complete onboarding data
+ * Includes body metrics, fitness goals, and calculated nutrition targets
  */
 const createUserProfile = async (userId, userData, onboardingData) => {
-  console.log('=� Creating profile document...');
+  console.log('👤 Creating profile document...');
 
   const profileData = {
     // Basic user info
     email: userData.email || '',
     name: userData.displayName || userData.email?.split('@')[0] || 'User',
 
-    // Recipe and dietary preferences (simplified - no body metrics)
-    dietaryRestrictions: onboardingData.dietaryRestrictions || [], // e.g., ['vegetarian', 'gluten-free', 'keto']
+    // Physical characteristics (from onboarding)
+    age: onboardingData.age || null,
+    gender: onboardingData.gender || null,
+    unitsPreference: onboardingData.unitsPreference || 'imperial',
+    weightLbs: onboardingData.weightLbs || null,
+    weightKg: onboardingData.weightKgs || null,
+    heightInches: onboardingData.heightInches || null,
+    heightCm: onboardingData.heightCentimeters || null,
+
+    // Fitness goals and activity
+    fitnessGoal: onboardingData.fitnessGoal || null, // e.g., 'weight_loss', 'muscle_gain', 'maintenance'
+    activityLevel: onboardingData.activityLevel || null, // e.g., 'sedentary', 'light', 'moderate', 'active', 'very_active'
+
+    // Calculated nutrition targets (from ReviewStep)
+    bmr: onboardingData.bmr || null, // Basal Metabolic Rate
+    tdee: onboardingData.tdee || null, // Total Daily Energy Expenditure
+    calorieTarget: onboardingData.calorieTarget || 2000, // Daily calorie goal
+    macros: onboardingData.macros || { protein: 150, carbs: 200, fat: 67 }, // Macro targets in grams
+
+    // Recipe and dietary preferences
+    dietaryPreferences: onboardingData.dietaryPreferences || [], // e.g., ['vegetarian', 'keto', 'paleo']
+    dietaryRestrictions: onboardingData.dietaryRestrictions || [], // Legacy field for compatibility
     allergies: onboardingData.allergies || [], // e.g., ['peanuts', 'shellfish', 'dairy']
     defaultServingSize: onboardingData.defaultServingSize || 4, // Number of servings per recipe
 
@@ -70,11 +143,15 @@ const createUserProfile = async (userId, userData, onboardingData) => {
     aiGenerationsReset: serverTimestamp(),
 
     // User preferences
-    preferences: {
-      mealComplexity: onboardingData.mealComplexity || 'intermediate',
-      cuisinePreferences: onboardingData.cuisinePreferences || [], // e.g., ['italian', 'mexican', 'asian']
-      budgetRange: onboardingData.budgetRange || 'medium'
+    preferences: onboardingData.preferences || {
+      mealComplexity: 'intermediate',
+      cuisinePreferences: [], // e.g., ['italian', 'mexican', 'asian']
+      budgetRange: 'medium',
+      workoutDays: ['monday', 'wednesday', 'friday']
     },
+
+    // Timezone
+    timezone: onboardingData.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone,
 
     // Status tracking
     onboardingCompleted: onboardingData.onboardingCompleted || false,
@@ -87,7 +164,7 @@ const createUserProfile = async (userId, userData, onboardingData) => {
 
   const profileRef = doc(db, 'users', userId);
   await setDoc(profileRef, profileData);
-  console.log(' Profile document created');
+  console.log('✅ Profile document created with complete onboarding data (age, gender, metrics, goals, targets)');
 };
 
 
@@ -96,7 +173,7 @@ const createUserProfile = async (userId, userData, onboardingData) => {
  * Based on lines 198-230 specifications
  */
 const createMealsCollection = async (userId) => {
-  console.log('<} Creating meals collection structure...');
+  console.log('🍽️ Creating meals collection structure...');
 
   // Create placeholder meal plan to establish schema
   const placeholderMealPlan = {
@@ -208,7 +285,7 @@ const createMealsCollection = async (userId) => {
 
   const mealRef = doc(collection(db, 'meals'));
   await setDoc(mealRef, placeholderMealPlan);
-  console.log(' Meals collection initialized with placeholder');
+  console.log('✅ Meals collection initialized with placeholder');
 };
 
 /**
@@ -216,7 +293,7 @@ const createMealsCollection = async (userId) => {
  * Based on user requirements: list, estimatedTotal, checkedItems + additional suggestions
  */
 const createGroceriesCollection = async (userId) => {
-  console.log('=� Creating groceries collection structure...');
+  console.log('🛒 Creating groceries collection structure...');
 
   const placeholderGroceryList = {
     id: `${userId}_groceries_placeholder`,
@@ -285,7 +362,7 @@ const createGroceriesCollection = async (userId) => {
 
   const groceryRef = doc(collection(db, 'groceries'));
   await setDoc(groceryRef, placeholderGroceryList);
-  console.log(' Groceries collection initialized with placeholder');
+  console.log('✅ Groceries collection initialized with placeholder');
 };
 
 /**
@@ -293,7 +370,7 @@ const createGroceriesCollection = async (userId) => {
  * Purpose: Cache AI responses to save costs and improve performance
  */
 const initializeAiCache = async (userId) => {
-  console.log('> Initializing AI cache structure...');
+  console.log('🧠 Initializing AI cache structure...');
 
   // Create a sample cache entry to establish schema
   const sampleCacheEntry = {
@@ -324,7 +401,7 @@ const initializeAiCache = async (userId) => {
 
   const cacheRef = doc(collection(db, 'aiCache'));
   await setDoc(cacheRef, sampleCacheEntry);
-  console.log(' AI Cache collection initialized with sample entry');
+  console.log('✅ AI Cache collection initialized with sample entry');
 };
 
 /**
@@ -348,7 +425,7 @@ export const userCollectionsExist = async (userId) => {
  * @param {string} userId
  */
 export const cleanupPlaceholders = async (userId) => {
-  console.log('>� Cleaning up placeholder documents...');
+  console.log('🧹 Cleaning up placeholder documents...');
   // This will be implemented later when we have real data generation
   // Will query and remove documents with type: 'placeholder'
 };

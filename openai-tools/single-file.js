@@ -32,7 +32,7 @@ const fileToCheck = "src/main.jsx";
 
 // Use cases: “What does this file do?” or “Are there performance issues here?”
 analyzeFile(fileToCheck, "Explain what this file does.")
-    .then(output => console.log("\n=== File Analysis ===\n", output))
+    .then(output => console.info("\n=== File Analysis ===\n", output))
     .catch(err => console.error(err));
 
 

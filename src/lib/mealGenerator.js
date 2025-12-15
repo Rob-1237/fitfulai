@@ -11,10 +11,33 @@ import {
 } from 'firebase/firestore';
 import { db } from './firebase';
 
+// Helper function to get the start date (Sunday) of the current week
+const getCurrentWeekStartDate = () => {
+  const today = new Date();
+  const dayOfWeek = today.getDay(); // 0 = Sunday, 1 = Monday, etc.
+  const sunday = new Date(today);
+  sunday.setDate(today.getDate() - dayOfWeek);
+  return sunday;
+};
+
+// Helper function to format date as YYYY-MM-DD
+const formatDate = (date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+// Helper function to get date for a specific day of the week
+const getWeekDate = (weekStartDate, dayOffset) => {
+  const date = new Date(weekStartDate);
+  date.setDate(weekStartDate.getDate() + dayOffset);
+  return formatDate(date);
+};
+
 // Generate a comprehensive meal plan using AI
-export const generateMealPlan = async (userProfile, planType = 'weekly') => {
+export const generateMealPlan = async (userProfile, planType = 'weekly', forceRefresh = false) => {
   const userId = userProfile.id || userProfile.uid || 'unknown';
-  console.log('<} Starting meal plan generation for user:', userProfile.id);
 
   try {
     // Create prompt hash for caching
@@ -34,28 +57,20 @@ export const generateMealPlan = async (userProfile, planType = 'weekly') => {
       planType
     };
 
-    console.log('🍽️ MealGenerator: promptContext for hashing:', promptContext);
     const promptHash = 'meal_' + btoa(JSON.stringify(promptContext)).slice(0, 28);
-    console.log('🍽️ MealGenerator: Generated promptHash:', promptHash);
 
-    // Check cache first
-    console.log('Checking AI cache for existing meal plan...');
-
+    // Check cache first (unless forceRefresh is true)
     let cachedResponse = null;
-    try {
-      cachedResponse = await getCachedResponse(promptHash, { userId: userId });
-      console.log('Cache check completed:', !!cachedResponse);
-    } catch (cacheError) {
-      console.warn('� Cache check failed, proceeding without cache:', cacheError.message);
+    if (!forceRefresh) {
+      try {
+        cachedResponse = await getCachedResponse(promptHash, { userId: userId });
+      } catch (cacheError) {
+        console.warn('⚠ Cache check failed, proceeding without cache:', cacheError.message);
+      }
     }
 
     if (cachedResponse) {
-      console.log('✅ 🍽️ CACHE HIT! Using cached meal plan data');
-      console.log('🍽️ Cached meal plan ID:', cachedResponse.id);
-
-      // Even though we're using cached data, save a NEW Firestore document
-      // This ensures the latest generation shows up on the Meals page
-      console.log('💾 🍽️ Saving cached meal plan as new Firestore document...');
+      // Save cached data as new Firestore document
       const processedMealPlan = await saveMealPlanToFirestore(userId, cachedResponse.response, {
         promptTokens: 0,
         completionTokens: 0,
@@ -63,7 +78,6 @@ export const generateMealPlan = async (userProfile, planType = 'weekly') => {
         cost: 0,
         model: 'cached'
       });
-      console.log('✅ 🍽️ Cached meal plan saved as new document');
 
       return {
         success: true,
@@ -72,24 +86,18 @@ export const generateMealPlan = async (userProfile, planType = 'weekly') => {
         source: 'cache'
       };
     }
-    console.log('❌ 🍽️ CACHE MISS! Generating new meal plan with OpenAI...');
 
     // Build comprehensive AI prompt
     const prompt = buildMealPlanPrompt(userProfile, planType);
 
-    // Estimate cost before making the call
-    const costEstimate = estimatePromptCost(prompt, 6000);
-    console.log('=� Estimated cost:', `$${costEstimate.estimatedCost.toFixed(4)}`);
-
     // Generate meal plan with AI
-    console.log('> Generating new meal plan with AI...');
     const aiResponse = await generateAIResponse(prompt, {
       max_tokens: 8000, // Large enough for comprehensive meal plan
       temperature: 0.5 // Higher creativity for meal variety
     });
 
     if (!aiResponse.success) {
-      console.error('L AI generation failed:', aiResponse.error);
+      console.error('❌ AI generation failed:', aiResponse.error);
       return {
         success: false,
         error: aiResponse.error,
@@ -106,8 +114,6 @@ export const generateMealPlan = async (userProfile, planType = 'weekly') => {
     // Process and save the meal plan
     const processedMealPlan = await saveMealPlanToFirestore(userId, aiResponse.data, aiResponse.usage);
 
-    console.log(' Meal plan generation completed successfully');
-
     return {
       success: true,
       data: processedMealPlan,
@@ -118,7 +124,7 @@ export const generateMealPlan = async (userProfile, planType = 'weekly') => {
     };
 
   } catch (error) {
-    console.error('L Meal plan generation error:', error);
+    console.error('❌ Meal plan generation error:', error);
     return {
       success: false,
       error: error.message || 'Failed to generate meal plan',
@@ -150,6 +156,11 @@ const buildMealPlanPrompt = (userProfile, planType) => {
     ? allergies.join(', ')
     : 'No known allergies';
 
+  // Calculate dynamic dates for the current week
+  const weekStartDate = getCurrentWeekStartDate();
+  const weekStartDateStr = formatDate(weekStartDate);
+  const mondayDate = getWeekDate(weekStartDate, 1); // Monday is 1 day after Sunday
+
   return `Generate a personalized ${planType} meal plan for a ${age}-year-old ${gender}.
 
 USER PROFILE:
@@ -174,7 +185,7 @@ IMPORTANT: Return ONLY a valid JSON object with this exact structure. Do NOT inc
 {
   "name": "Descriptive meal plan name",
   "description": "Brief description of the meal plan approach",
-  "weekStartDate": "2025-09-20",
+  "weekStartDate": "${weekStartDateStr}",
   "totalCalories": ${calorieTarget},
   "macroTargets": {
     "protein": ${macros.protein},
@@ -183,7 +194,7 @@ IMPORTANT: Return ONLY a valid JSON object with this exact structure. Do NOT inc
   },
   "days": {
     "monday": {
-      "date": "2025-09-20",
+      "date": "${mondayDate}",
       "totalCalories": ${calorieTarget},
       "macros": {
         "protein": ${macros.protein},
@@ -214,7 +225,7 @@ IMPORTANT: Return ONLY a valid JSON object with this exact structure. Do NOT inc
           "calories": 600,
           "macros": { "protein": 40, "carbs": 45, "fat": 25 },
           "ingredients": ["5oz salmon fillet", "1 cup cooked quinoa", "steamed broccoli"],
-          "instructions": "Bake salmon at 400�F for 15 minutes, serve with quinoa and vegetables",
+          "instructions": "Bake salmon at 400°F for 15 minutes, serve with quinoa and vegetables",
           "prepTime": "10 minutes",
           "cookTime": "15 minutes"
         },
@@ -296,12 +307,9 @@ const saveMealPlanToFirestore = async (userId, mealPlanData, usage) => {
     // Save to Firestore
     const mealPlanRef = doc(db, 'meals', mealPlanId);
     await setDoc(mealPlanRef, mealPlanDoc);
-    console.log('✅ 🍽️ Meal plan saved to Firestore with ID:', mealPlanId);
 
     // Remove placeholder meal plan if it exists
     await removeMealPlanPlaceholder(userId);
-
-    console.log('=� Meal plan saved to Firestore:', mealPlanId);
 
     return {
       id: mealPlanId,
@@ -309,7 +317,7 @@ const saveMealPlanToFirestore = async (userId, mealPlanData, usage) => {
     };
 
   } catch (error) {
-    console.error('L Error saving meal plan to Firestore:', error);
+    console.error('❌ Error saving meal plan to Firestore:', error);
     throw error;
   }
 };
@@ -325,10 +333,8 @@ const removeMealPlanPlaceholder = async (userId) => {
       isActive: false,
       replacedAt: serverTimestamp()
     });
-
-    console.log('=� Placeholder meal plan marked as inactive');
   } catch (error) {
-    console.log('9 No placeholder meal plan to remove (this is fine)');
+    // Silently handle - placeholder may not exist
   }
 };
 
@@ -353,10 +359,8 @@ const cacheAIResponse = async (promptHash, userContext, aiResponse) => {
     };
 
     await addDoc(collection(db, 'aiCache'), cacheDoc);
-    console.log('=� AI response cached for future use');
-
   } catch (error) {
-    console.warn('� Failed to cache AI response:', error);
+    console.warn('⚠️ Failed to cache AI response:', error);
     // Don't fail the main operation if caching fails
   }
 };

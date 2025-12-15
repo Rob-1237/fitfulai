@@ -5,7 +5,8 @@ export const useUIStore = create((set, get) => ({
   currentPage: 'home',
   setCurrentPage: (page) => set({ currentPage: page }),
 
-  // Theme state
+  // Theme state (DEPRECATED - use useSettings hook instead)
+  // Kept for backwards compatibility only
   isDark: false,
   toggleTheme: () => set((state) => ({ isDark: !state.isDark })),
 

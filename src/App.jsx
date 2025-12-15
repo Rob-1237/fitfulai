@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "./hooks/useAuth";
+import { SettingsProvider, useSettings } from "./contexts/SettingsContext";
 import { useUIStore } from "./stores/useUIStore";
 import { ToastProvider } from "./components/ui/ToastProvider";
 import ResponsiveNavigation from "./components/nav/ResponsiveNavigation";
@@ -15,32 +16,26 @@ import Dashboard from "./pages/dashboard/index.jsx";
 
 import "./styles/App.css";
 
-function App() {
-  // console.log('🚀 APP COMPONENT MOUNTING');
-
+// Inner App component that uses settings context
+function AppContent() {
   const { isInitialized, userProfile } = useAuth();
-  const { isDark, isMobile, setIsMobile, modals, closeModal } = useUIStore();
-
-  console.log('🚀 App state:', {
-    isInitialized,
-    isDark,
-    isMobile,
-    modals
-  });
+  const { isDark, isLoading: settingsLoading } = useSettings();
+  const { isMobile, setIsMobile, modals, closeModal } = useUIStore();
 
   // Mobile detection
   useEffect(() => {
     const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
+      const newIsMobile = window.innerWidth < 768;
+      // Only update if value actually changed to prevent infinite loops
+      setIsMobile(newIsMobile);
     };
 
     checkMobile();
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
-  }, [setIsMobile]);
+  }, []); // Empty deps - setIsMobile from Zustand is stable
 
-  if (!isInitialized) {
-    console.log('⏳ App not initialized yet, showing loading screen');
+  if (!isInitialized || settingsLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-lg">Loading...</div>
@@ -48,7 +43,6 @@ function App() {
     );
   }
 
-  // console.log('✅ App initialized, rendering main application');
 
   return (
     <ToastProvider>
@@ -63,7 +57,7 @@ function App() {
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
 
-          <ResponsiveNavigation />
+          <ResponsiveNavigation isDark={isDark} />
 
           <AuthModal
             open={modals.auth}
@@ -71,6 +65,17 @@ function App() {
           />
         </div>
       </ToastProvider>
+  );
+}
+
+// Main App component that wraps AppContent with SettingsProvider
+function App() {
+  const { user } = useAuth();
+
+  return (
+    <SettingsProvider userId={user?.uid}>
+      <AppContent />
+    </SettingsProvider>
   );
 }
 

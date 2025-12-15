@@ -1,11 +1,6 @@
 import { motion } from 'framer-motion';
 
 export default function DietaryPreferencesStep({ data, updateData }) {
-  console.log('🥗 DietaryPreferencesStep data:', {
-    dietaryPreferences: data.dietaryPreferences,
-    allergies: data.allergies
-  });
-
   const dietaryOptions = [
     { value: 'vegetarian', label: 'Vegetarian', emoji: '🥬' },
     { value: 'vegan', label: 'Vegan', emoji: '🌱' },

@@ -187,3 +187,31 @@ export const getCurrentWeekData = async (userId) => {
     };
   }
 };
+
+// Get data for a specific week (for week navigation)
+export const getWeekData = async (userId, weekStartDate) => {
+  try {
+    // Convert Date object to underscore format (YYYY_MM_DD)
+    const formattedDate = weekStartDate instanceof Date
+      ? weekStartDate.toISOString().split('T')[0].replace(/-/g, '_')
+      : weekStartDate.replace(/-/g, '_');
+
+    const [mealPlan, groceryList] = await Promise.all([
+      getMealPlanByDate(userId, formattedDate),
+      getGroceryListByDate(userId, formattedDate)
+    ]);
+
+    return {
+      weekStartDate: formattedDate,
+      mealPlan,
+      groceryList
+    };
+  } catch (error) {
+    console.error('❌ Error fetching week data:', error);
+    return {
+      weekStartDate: null,
+      mealPlan: null,
+      groceryList: null
+    };
+  }
+};

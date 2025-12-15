@@ -11,10 +11,26 @@ import {
 } from 'firebase/firestore';
 import { db } from './firebase';
 
+// Helper function to get the start date (Sunday) of the current week
+const getCurrentWeekStartDate = () => {
+  const today = new Date();
+  const dayOfWeek = today.getDay(); // 0 = Sunday, 1 = Monday, etc.
+  const sunday = new Date(today);
+  sunday.setDate(today.getDate() - dayOfWeek);
+  return sunday;
+};
+
+// Helper function to format date as YYYY-MM-DD
+const formatDate = (date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 // Generate a comprehensive grocery list using AI
-export const generateGroceryList = async (userProfile, mealPlan = null) => {
+export const generateGroceryList = async (userProfile, mealPlan = null, forceRefresh = false) => {
   const userId = userProfile.id || userProfile.uid || 'unknown';
-  console.log('🛒 Starting grocery list generation for user:', userId);
 
   try {
     // Create prompt hash for caching
@@ -29,28 +45,20 @@ export const generateGroceryList = async (userProfile, mealPlan = null) => {
       mealPlanId: mealPlan?.id || 'standalone'
     };
 
-    console.log('🛒 GroceryGenerator: promptContext for hashing:', promptContext);
     const promptHash = 'grocery_' + btoa(JSON.stringify(promptContext)).slice(0, 26);
-    console.log('🛒 GroceryGenerator: Generated promptHash:', promptHash);
 
-    // Check cache first
-    console.log('🔍 Checking AI cache for existing grocery list...');
-
+    // Check cache first (unless forceRefresh is true)
     let cachedResponse = null;
-    try {
-      cachedResponse = await getCachedResponse(promptHash, { userId: userId });
-      console.log('📋 Cache check completed:', !!cachedResponse);
-    } catch (cacheError) {
-      console.warn('⚠️ Cache check failed, proceeding without cache:', cacheError.message);
+    if (!forceRefresh) {
+      try {
+        cachedResponse = await getCachedResponse(promptHash, { userId: userId });
+      } catch (cacheError) {
+        console.warn('⚠️ Cache check failed, proceeding without cache:', cacheError.message);
+      }
     }
 
     if (cachedResponse) {
-      console.log('✅ 🛒 CACHE HIT! Using cached grocery list data');
-      console.log('🛒 Cached grocery list ID:', cachedResponse.id);
-
-      // Even though we're using cached data, save a NEW Firestore document
-      // This ensures the latest generation shows up on the Groceries page
-      console.log('💾 🛒 Saving cached grocery list as new Firestore document...');
+      // Save cached data as new Firestore document
       const processedGroceryList = await saveGroceryListToFirestore(userId, cachedResponse.response, {
         promptTokens: 0,
         completionTokens: 0,
@@ -58,7 +66,6 @@ export const generateGroceryList = async (userProfile, mealPlan = null) => {
         cost: 0,
         model: 'cached'
       });
-      console.log('✅ 🛒 Cached grocery list saved as new document');
 
       return {
         success: true,
@@ -68,16 +75,8 @@ export const generateGroceryList = async (userProfile, mealPlan = null) => {
       };
     }
 
-    console.log('❌ 🛒 CACHE MISS! Generating new grocery list with OpenAI...');
     // Build comprehensive AI prompt
     const prompt = buildGroceryListPrompt(userProfile, mealPlan);
-
-    // Estimate cost before making the call
-    const costEstimate = estimatePromptCost(prompt, 4000);
-    console.log('💰 Estimated cost:', `$${costEstimate.estimatedCost.toFixed(4)}`);
-
-    // Generate grocery list with AI
-    console.log('🤖 Generating new grocery list with AI...');
     const aiResponse = await generateAIResponse(prompt, {
       max_tokens: 6000, // Sufficient for detailed grocery lists
       temperature: 0.3 // Lower temperature for precise lists
@@ -100,8 +99,6 @@ export const generateGroceryList = async (userProfile, mealPlan = null) => {
 
     // Process and save the grocery list
     const processedGroceryList = await saveGroceryListToFirestore(userId, aiResponse.data, aiResponse.usage);
-
-    console.log('✅ Grocery list generation completed successfully');
 
     return {
       success: true,
@@ -138,6 +135,10 @@ const buildGroceryListPrompt = (userProfile, mealPlan) => {
     ? allergies.join(', ')
     : 'No known allergies';
 
+  // Calculate dynamic dates for the current week
+  const weekStartDate = getCurrentWeekStartDate();
+  const weekStartDateStr = formatDate(weekStartDate);
+
   // Extract ingredients from meal plan if provided
   const mealPlanIngredients = mealPlan?.shoppingList ?
     mealPlan.shoppingList.map(item => `${item.quantity} ${item.item}`).join(', ') : '';
@@ -167,7 +168,7 @@ IMPORTANT: Return ONLY a valid JSON object with this exact structure. Do NOT inc
 {
   "name": "Weekly Grocery List",
   "description": "Organized shopping list for efficient grocery shopping",
-  "weekStartDate": "2025-09-20",
+  "weekStartDate": "${weekStartDateStr}",
   "totalEstimatedCost": 85.50,
   "sections": {
     "produce": {
@@ -300,12 +301,9 @@ const saveGroceryListToFirestore = async (userId, groceryListData, usage) => {
     // Save to Firestore
     const groceryListRef = doc(db, 'groceries', groceryListId);
     await setDoc(groceryListRef, groceryListDoc);
-    console.log('✅ 🛒 Grocery list saved to Firestore with ID:', groceryListId);
 
     // Remove placeholder grocery list if it exists
     await removeGroceryListPlaceholder(userId);
-
-    console.log('💾 Grocery list saved to Firestore:', groceryListId);
 
     return {
       id: groceryListId,
@@ -329,10 +327,8 @@ const removeGroceryListPlaceholder = async (userId) => {
       isActive: false,
       replacedAt: serverTimestamp()
     });
-
-    console.log('📝 Placeholder grocery list marked as inactive');
   } catch (error) {
-    console.log('ℹ️ No placeholder grocery list to remove (this is fine)');
+    // Silently handle - placeholder may not exist
   }
 };
 
@@ -357,8 +353,6 @@ const cacheAIResponse = async (promptHash, userContext, aiResponse) => {
     };
 
     await addDoc(collection(db, 'aiCache'), cacheDoc);
-    console.log('💾 AI response cached for future use');
-
   } catch (error) {
     console.warn('⚠️ Failed to cache AI response:', error);
     // Don't fail the main operation if caching fails

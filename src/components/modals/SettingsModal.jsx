@@ -1,10 +1,12 @@
 import { Dialog } from '@headlessui/react';
 import { X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useUIStore } from '../../stores/useUIStore';
+import { useAuth } from '../../hooks/useAuth';
+import { useSettings } from '../../contexts/SettingsContext';
 
 export default function SettingsModal({ open, onClose }) {
-  const { isDark, toggleTheme } = useUIStore();
+  const { user } = useAuth();
+  const { isDark, toggleTheme } = useSettings();
 
   return (
     <AnimatePresence>

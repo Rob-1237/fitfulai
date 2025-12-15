@@ -5,15 +5,7 @@ export default function BasicInfoStep({ data, updateData, onNext }) {
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
 
-  console.log('👤 BasicInfoStep data:', {
-    age: data.age,
-    gender: data.gender,
-    unitsPreference: data.unitsPreference
-  });
-
   const handleInputChange = (field, value) => {
-    console.log(`👤 BasicInfoStep: ${field} = ${value}`);
-
     // Clear error when user starts typing
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: null }));
@@ -59,7 +51,6 @@ export default function BasicInfoStep({ data, updateData, onNext }) {
   useEffect(() => {
     if (isValid() && touched.age && touched.gender && touched.unitsPreference) {
       const timer = setTimeout(() => {
-        console.log('✅ BasicInfoStep auto-advancing - all fields valid');
         onNext();
       }, 800);
       return () => clearTimeout(timer);
