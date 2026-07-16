@@ -1,9 +1,4 @@
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import {
-  faChevronLeft,
-  faChevronRight,
-  faCalendarDay
-} from '@fortawesome/pro-duotone-svg-icons';
+import { ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 /**
@@ -76,13 +71,12 @@ export default function WeekSelector({
           aria-label="Previous week"
           title={!canGoToPrevWeek ? 'Cannot view more than 4 weeks back' : 'Previous week'}
         >
-          <FontAwesomeIcon icon={faChevronLeft} className="w-4 h-4" />
+          <ChevronLeft className="w-4 h-4" />
         </button>
 
         {/* Date Range Display */}
         <div className="flex items-center space-x-2">
-          <FontAwesomeIcon
-            icon={faCalendarDay}
+          <Calendar
             className={`w-4 h-4 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}
           />
           <span className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
@@ -101,7 +95,7 @@ export default function WeekSelector({
           aria-label="Next week"
           title="Next week"
         >
-          <FontAwesomeIcon icon={faChevronRight} className="w-4 h-4" />
+          <ChevronRight className="w-4 h-4" />
         </button>
       </div>
 

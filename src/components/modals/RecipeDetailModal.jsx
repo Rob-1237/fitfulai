@@ -1,13 +1,6 @@
 import { Dialog } from '@headlessui/react';
-import { X } from 'lucide-react';
+import { X, Utensils, Clock, Flame, ListChecks } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import {
-  faUtensils,
-  faClock,
-  faFireFlame,
-  faListCheck
-} from '@fortawesome/pro-duotone-svg-icons';
 
 export default function RecipeDetailModal({ open, onClose, recipe, mealType, isDark }) {
   if (!recipe) return null;
@@ -105,7 +98,7 @@ export default function RecipeDetailModal({ open, onClose, recipe, mealType, isD
                 <div className={`text-center p-4 rounded-lg ${
                   isDark ? 'bg-gray-700' : 'bg-orange-50'
                 }`}>
-                  <FontAwesomeIcon icon={faFireFlame} className="text-orange-500 text-2xl mb-2" />
+                  <Flame className="text-orange-500 w-6 h-6 mb-2 mx-auto" />
                   <div className={`text-2xl font-bold ${
                     isDark ? 'text-white' : 'text-gray-900'
                   }`}>
@@ -121,7 +114,7 @@ export default function RecipeDetailModal({ open, onClose, recipe, mealType, isD
                 <div className={`text-center p-4 rounded-lg ${
                   isDark ? 'bg-gray-700' : 'bg-blue-50'
                 }`}>
-                  <FontAwesomeIcon icon={faClock} className="text-blue-500 text-2xl mb-2" />
+                  <Clock className="text-blue-500 w-6 h-6 mb-2 mx-auto" />
                   <div className={`text-2xl font-bold ${
                     isDark ? 'text-white' : 'text-gray-900'
                   }`}>
@@ -137,7 +130,7 @@ export default function RecipeDetailModal({ open, onClose, recipe, mealType, isD
                 <div className={`text-center p-4 rounded-lg ${
                   isDark ? 'bg-gray-700' : 'bg-green-50'
                 }`}>
-                  <FontAwesomeIcon icon={faUtensils} className="text-green-500 text-2xl mb-2" />
+                  <Utensils className="text-green-500 w-6 h-6 mb-2 mx-auto" />
                   <div className={`text-2xl font-bold ${
                     isDark ? 'text-white' : 'text-gray-900'
                   }`}>
@@ -205,7 +198,7 @@ export default function RecipeDetailModal({ open, onClose, recipe, mealType, isD
                 isDark ? 'border-gray-700' : 'border-gray-200'
               }`}>
                 <div className="flex items-center gap-2 mb-4">
-                  <FontAwesomeIcon icon={faListCheck} className="text-orange-500 text-lg" />
+                  <ListChecks className="text-orange-500 w-5 h-5" />
                   <h3 className={`text-lg font-semibold ${
                     isDark ? 'text-white' : 'text-gray-900'
                   }`}>
@@ -230,7 +223,7 @@ export default function RecipeDetailModal({ open, onClose, recipe, mealType, isD
               {/* Instructions */}
               <div className="p-6">
                 <div className="flex items-center gap-2 mb-4">
-                  <FontAwesomeIcon icon={faUtensils} className="text-green-500 text-lg" />
+                  <Utensils className="text-green-500 w-5 h-5" />
                   <h3 className={`text-lg font-semibold ${
                     isDark ? 'text-white' : 'text-gray-900'
                   }`}>

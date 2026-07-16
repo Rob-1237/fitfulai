@@ -41,6 +41,7 @@ const DEFAULT_SETTINGS = {
 const SettingsContext = createContext(null);
 
 // Custom hook to use the settings context
+// eslint-disable-next-line react-refresh/only-export-components -- context hook co-located with its provider
 export const useSettings = () => {
   const context = useContext(SettingsContext);
   if (!context) {

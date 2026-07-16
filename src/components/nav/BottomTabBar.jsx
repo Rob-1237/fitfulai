@@ -1,19 +1,13 @@
 import { motion } from 'framer-motion';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import {
-  faHome,
-  faPlateUtensils,
-  faBasketShopping,
-  faChartUser
-} from '@fortawesome/pro-duotone-svg-icons';
+import { Home, UtensilsCrossed, ShoppingBasket, LayoutDashboard } from 'lucide-react';
 import { useUIStore } from '../../stores/useUIStore';
 
 const navigationItems = [
-  { path: '/', page: 'home', icon: faHome, label: 'Home' },
-  { path: '/dashboard', page: 'dashboard', icon: faChartUser, label: 'Dashboard' },
-  { path: '/meals', page: 'meals', icon: faPlateUtensils, label: 'Meals' },
-  { path: '/groceries', page: 'groceries', icon: faBasketShopping, label: 'Groceries' }
+  { path: '/', page: 'home', icon: Home, label: 'Home' },
+  { path: '/dashboard', page: 'dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+  { path: '/meals', page: 'meals', icon: UtensilsCrossed, label: 'Meals' },
+  { path: '/groceries', page: 'groceries', icon: ShoppingBasket, label: 'Groceries' }
 ];
 
 const BottomTabBar = ({ isDark }) => {
@@ -38,10 +32,7 @@ const BottomTabBar = ({ isDark }) => {
       animate={isActive ? { y: -2 } : { y: 0 }}
       transition={{ duration: 0.2 }}
     >
-      <FontAwesomeIcon 
-        icon={item.icon} 
-        className={`text-lg my-1`} 
-      />
+      <item.icon className="w-5 h-5 my-1" />
       <span className={`text-xs font-medium`}>
         {item.label}
       </span>

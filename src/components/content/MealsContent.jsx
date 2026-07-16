@@ -1,15 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import {
-  faPlateUtensils,
-  faUtensils,
-  faClock,
-  faFireFlame,
-  faCalendarWeek,
-  faChartPie
-} from '@fortawesome/pro-duotone-svg-icons';
+import { UtensilsCrossed, Clock, Flame, CalendarDays, PieChart } from 'lucide-react';
 import { getUserMealPlans, getCurrentWeekData, getWeekData } from '../../lib/firestoreQueries';
 import { useAuth } from '../../hooks/useAuth';
 import { useWeekContext } from '../../hooks/useWeekContext';
@@ -45,8 +37,6 @@ export default function MealsContent({ isDark }) {
     goToNextWeek,
     goToPrevWeek,
     goToCurrentWeek,
-    isDateInPast,
-    isToday,
     getDaysRemainingInPlan,
     canGeneratePlan
   } = weekContext;
@@ -142,7 +132,7 @@ export default function MealsContent({ isDark }) {
   if (!mealPlans.length) {
     return (
       <div className="text-center py-12">
-        <FontAwesomeIcon icon={faPlateUtensils} className="text-6xl text-gray-400 mb-4" />
+        <UtensilsCrossed className="w-16 h-16 text-gray-400 mb-4 mx-auto" />
         <h3 className={`text-xl font-medium mb-2 ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>
           No meal plans found
         </h3>
@@ -378,8 +368,7 @@ export default function MealsContent({ isDark }) {
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
-                <FontAwesomeIcon
-                  icon={faCalendarWeek}
+                <CalendarDays
                   className={`w-5 h-5 ${isDark ? 'text-gray-400' : iconColors[urgency]}`}
                 />
                 <div>
@@ -429,7 +418,7 @@ export default function MealsContent({ isDark }) {
           className={`p-12 text-center rounded-xl border ${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} shadow-lg`}
         >
           <div className="mb-4">
-            <FontAwesomeIcon icon={faCalendarWeek} className={`w-16 h-16 ${isDark ? 'text-gray-600' : 'text-gray-300'}`} />
+            <CalendarDays className={`w-16 h-16 mx-auto ${isDark ? 'text-gray-600' : 'text-gray-300'}`} />
           </div>
           <h3 className={`text-xl font-semibold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
             No Meal Plan for This Week
@@ -490,7 +479,7 @@ export default function MealsContent({ isDark }) {
                   }`}>
                     <div className="flex items-center justify-between mb-3">
                       <h4 className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                        <FontAwesomeIcon icon={faChartPie} className="text-orange-500 mr-2" />
+                        <PieChart className="w-4 h-4 text-orange-500 mr-2 inline-block" />
                         Today's Nutrition
                       </h4>
                       {hasSkippedMeals && (
@@ -564,7 +553,7 @@ export default function MealsContent({ isDark }) {
 
                     {hasSkippedMeals && (
                       <p className={`text-xs mt-3 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                        <FontAwesomeIcon icon={faFireFlame} className="text-orange-500 mr-1" />
+                        <Flame className="w-4 h-4 text-orange-500 mr-1 inline-block" />
                         Nutrition adjusted for skipped meals
                       </p>
                     )}
@@ -601,13 +590,13 @@ export default function MealsContent({ isDark }) {
                           </div>
                           <div className="text-right">
                             <div className="flex items-center space-x-1">
-                              <FontAwesomeIcon icon={faFireFlame} className="text-orange-500 text-xs" />
+                              <Flame className="w-3 h-3 text-orange-500" />
                               <span className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
                                 {todaysMeals.breakfast?.calories || '420'} cal
                               </span>
                             </div>
                             <div className="flex items-center space-x-1 mt-1">
-                              <FontAwesomeIcon icon={faClock} className="text-blue-500 text-xs" />
+                              <Clock className="w-3 h-3 text-blue-500" />
                               <span className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
                                 {todaysMeals.breakfast?.prepTime || '10 min'}
                               </span>
@@ -661,13 +650,13 @@ export default function MealsContent({ isDark }) {
                           </div>
                           <div className="text-right">
                             <div className="flex items-center space-x-1">
-                              <FontAwesomeIcon icon={faFireFlame} className="text-orange-500 text-xs" />
+                              <Flame className="w-3 h-3 text-orange-500" />
                               <span className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
                                 {(todaysMeals.snack1 || todaysMeals.meals?.snack1)?.calories || '150'} cal
                               </span>
                             </div>
                             <div className="flex items-center space-x-1 mt-1">
-                              <FontAwesomeIcon icon={faClock} className="text-blue-500 text-xs" />
+                              <Clock className="w-3 h-3 text-blue-500" />
                               <span className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
                                 {(todaysMeals.snack1 || todaysMeals.meals?.snack1)?.prepTime || '5 min'}
                               </span>
@@ -724,13 +713,13 @@ export default function MealsContent({ isDark }) {
                           </div>
                           <div className="text-right">
                             <div className="flex items-center space-x-1">
-                              <FontAwesomeIcon icon={faFireFlame} className="text-orange-500 text-xs" />
+                              <Flame className="w-3 h-3 text-orange-500" />
                               <span className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
                                 {todaysMeals.lunch?.calories || '520'} cal
                               </span>
                             </div>
                             <div className="flex items-center space-x-1 mt-1">
-                              <FontAwesomeIcon icon={faClock} className="text-blue-500 text-xs" />
+                              <Clock className="w-3 h-3 text-blue-500" />
                               <span className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
                                 {todaysMeals.lunch?.prepTime || '15 min'}
                               </span>
@@ -784,13 +773,13 @@ export default function MealsContent({ isDark }) {
                           </div>
                           <div className="text-right">
                             <div className="flex items-center space-x-1">
-                              <FontAwesomeIcon icon={faFireFlame} className="text-orange-500 text-xs" />
+                              <Flame className="w-3 h-3 text-orange-500" />
                               <span className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
                                 {(todaysMeals.snack2 || todaysMeals.meals?.snack2)?.calories || '200'} cal
                               </span>
                             </div>
                             <div className="flex items-center space-x-1 mt-1">
-                              <FontAwesomeIcon icon={faClock} className="text-blue-500 text-xs" />
+                              <Clock className="w-3 h-3 text-blue-500" />
                               <span className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
                                 {(todaysMeals.snack2 || todaysMeals.meals?.snack2)?.prepTime || '5 min'}
                               </span>
@@ -847,13 +836,13 @@ export default function MealsContent({ isDark }) {
                           </div>
                           <div className="text-right">
                             <div className="flex items-center space-x-1">
-                              <FontAwesomeIcon icon={faFireFlame} className="text-orange-500 text-xs" />
+                              <Flame className="w-3 h-3 text-orange-500" />
                               <span className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
                                 {todaysMeals.dinner?.calories || '640'} cal
                               </span>
                             </div>
                             <div className="flex items-center space-x-1 mt-1">
-                              <FontAwesomeIcon icon={faClock} className="text-blue-500 text-xs" />
+                              <Clock className="w-3 h-3 text-blue-500" />
                               <span className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
                                 {todaysMeals.dinner?.prepTime || '25 min'}
                               </span>

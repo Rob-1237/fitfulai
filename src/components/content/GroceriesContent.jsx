@@ -1,14 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import {
-  faBasketShopping,
-  faListCheck,
-  faMapMarkerAlt,
-  faCheck,
-  faPlus
-} from '@fortawesome/pro-duotone-svg-icons';
+import { ShoppingBasket, ListChecks, MapPin, Check, Plus } from 'lucide-react';
 import { getUserGroceryLists, getCurrentWeekData, getWeekData } from '../../lib/firestoreQueries';
 import { useAuth } from '../../hooks/useAuth';
 import { useWeekContext } from '../../hooks/useWeekContext';
@@ -253,7 +246,7 @@ export default function GroceriesContent({ isDark }) {
   if (!groceryLists.length) {
     return (
       <div className="text-center py-12">
-        <FontAwesomeIcon icon={faBasketShopping} className="text-6xl text-gray-400 mb-4" />
+        <ShoppingBasket className="w-16 h-16 text-gray-400 mb-4 mx-auto" />
         <h3 className={`text-xl font-medium mb-2 ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>
           No grocery lists found
         </h3>
@@ -332,7 +325,7 @@ export default function GroceriesContent({ isDark }) {
           className={`p-12 text-center rounded-xl border ${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} shadow-lg`}
         >
           <div className="mb-4">
-            <FontAwesomeIcon icon={faBasketShopping} className={`w-16 h-16 ${isDark ? 'text-gray-600' : 'text-gray-300'}`} />
+            <ShoppingBasket className={`w-16 h-16 mx-auto ${isDark ? 'text-gray-600' : 'text-gray-300'}`} />
           </div>
           <h3 className={`text-xl font-semibold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
             No Grocery List for This Week
@@ -403,9 +396,8 @@ export default function GroceriesContent({ isDark }) {
                             onClick={() => toggleItemChecked(itemName, section.section)}
                           >
                             <button className={`w-5 h-5 border-2 rounded ${isDark ? 'border-gray-600 hover:border-green-500' : 'border-gray-300 hover:border-green-500'} flex items-center justify-center ${isChecked ? 'bg-green-500 border-green-500' : ''}`}>
-                              <FontAwesomeIcon
-                                icon={faCheck}
-                                className={`text-white text-xs ${isChecked ? 'opacity-100' : 'opacity-0'}`}
+                              <Check
+                                className={`text-white w-3 h-3 ${isChecked ? 'opacity-100' : 'opacity-0'}`}
                               />
                             </button>
                             <span className={`text-sm ${isChecked ? 'line-through opacity-50' : ''} ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
@@ -438,9 +430,8 @@ export default function GroceriesContent({ isDark }) {
                             onClick={() => toggleItemChecked(item.name, 'custom')}
                           >
                             <button className={`w-5 h-5 border-2 rounded ${isDark ? 'border-gray-600 hover:border-green-500' : 'border-gray-300 hover:border-green-500'} flex items-center justify-center ${isChecked ? 'bg-green-500 border-green-500' : ''}`}>
-                              <FontAwesomeIcon
-                                icon={faCheck}
-                                className={`text-white text-xs ${isChecked ? 'opacity-100' : 'opacity-0'}`}
+                              <Check
+                                className={`text-white w-3 h-3 ${isChecked ? 'opacity-100' : 'opacity-0'}`}
                               />
                             </button>
                             <span className={`text-sm ${isChecked ? 'line-through opacity-50' : ''} ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
@@ -466,7 +457,7 @@ export default function GroceriesContent({ isDark }) {
                 whileHover={{ scale: 1.01 }}
                 whileTap={{ scale: 0.99 }}
               >
-                <FontAwesomeIcon icon={faPlus} />
+                <Plus className="w-5 h-5" />
                 <span>Add Custom Item</span>
               </motion.button>
             </motion.div>
@@ -561,7 +552,7 @@ export default function GroceriesContent({ isDark }) {
         transition={{ delay: 0.2 }}
       >
         <div className="flex items-center space-x-3 mb-4">
-          <FontAwesomeIcon icon={faMapMarkerAlt} className="text-blue-500 text-xl" />
+          <MapPin className="text-blue-500 w-5 h-5" />
           <h3 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
             Optimized Store Route
           </h3>
@@ -607,7 +598,7 @@ export default function GroceriesContent({ isDark }) {
                   {index + 1}. {section.section}
                 </span>
                 {isCompleted && (
-                  <FontAwesomeIcon icon={faCheck} className="text-green-500 text-xs ml-1" />
+                  <Check className="text-green-500 w-3 h-3 ml-1 inline-block" />
                 )}
               </div>
             );
@@ -667,7 +658,7 @@ export default function GroceriesContent({ isDark }) {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.3 }}
         >
-          <FontAwesomeIcon icon={faListCheck} className="text-4xl text-green-500 mb-3" />
+          <ListChecks className="w-10 h-10 text-green-500 mb-3 mx-auto" />
           <h3 className={`text-lg font-medium mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
             Ready for Smart Grocery Lists?
           </h3>

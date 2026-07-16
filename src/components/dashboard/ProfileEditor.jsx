@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faUtensils, faSave, faRefresh, faPlus, faTimes } from '@fortawesome/pro-duotone-svg-icons';
+import { Utensils, Save, RefreshCw, Plus, X } from 'lucide-react';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { useAuth } from '../../hooks/useAuth';
@@ -92,12 +91,6 @@ export default function ProfileEditor({ isDark, onRegenerateClick }) {
     setAllergyInput('');
   };
 
-  // Track changes when user edits any field
-  const handleFieldChange = (field, value) => {
-    setEditedData({ ...editedData, [field]: value });
-    setHasUnsavedChanges(true);
-  };
-
   const toggleRestriction = (restrictionId) => {
     const currentRestrictions = editedData.dietaryPreferences || [];
     const newRestrictions = currentRestrictions.includes(restrictionId)
@@ -177,7 +170,7 @@ export default function ProfileEditor({ isDark, onRegenerateClick }) {
                 disabled={isSaving}
                 className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:bg-gray-400 flex items-center gap-2"
               >
-                <FontAwesomeIcon icon={faSave} />
+                <Save className="w-4 h-4" />
                 {isSaving ? 'Saving...' : 'Save Changes'}
               </button>
             </>
@@ -201,7 +194,7 @@ export default function ProfileEditor({ isDark, onRegenerateClick }) {
         {/* Dietary Restrictions Section */}
         <div className={`p-6 rounded-xl border ${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
           <div className="flex items-center gap-2 mb-4">
-            <FontAwesomeIcon icon={faUtensils} className="text-green-500 text-xl" />
+            <Utensils className="text-green-500 w-5 h-5" />
             <h3 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
               Dietary Restrictions
             </h3>
@@ -258,7 +251,7 @@ export default function ProfileEditor({ isDark, onRegenerateClick }) {
         {/* Allergies Section */}
         <div className={`p-6 rounded-xl border ${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
           <div className="flex items-center gap-2 mb-4">
-            <FontAwesomeIcon icon={faUtensils} className="text-red-500 text-xl" />
+            <Utensils className="text-red-500 w-5 h-5" />
             <h3 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
               Allergies & Food Restrictions
             </h3>
@@ -287,7 +280,7 @@ export default function ProfileEditor({ isDark, onRegenerateClick }) {
                   whileHover={{ scale: allergyInput.trim() ? 1.02 : 1 }}
                   whileTap={{ scale: allergyInput.trim() ? 0.98 : 1 }}
                 >
-                  <FontAwesomeIcon icon={faPlus} />
+                  <Plus className="w-5 h-5" />
                 </motion.button>
               </div>
 
@@ -306,7 +299,7 @@ export default function ProfileEditor({ isDark, onRegenerateClick }) {
                         onClick={() => removeAllergy(allergy)}
                         className="text-red-500 hover:text-red-700 transition-colors"
                       >
-                        <FontAwesomeIcon icon={faTimes} className="text-xs" />
+                        <X className="w-3 h-3" />
                       </button>
                     </motion.div>
                   ))}
@@ -340,7 +333,7 @@ export default function ProfileEditor({ isDark, onRegenerateClick }) {
         {/* Default Serving Size Section */}
         <div className={`p-6 rounded-xl border ${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
           <div className="flex items-center gap-2 mb-4">
-            <FontAwesomeIcon icon={faUtensils} className="text-orange-500 text-xl" />
+            <Utensils className="text-orange-500 w-5 h-5" />
             <h3 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
               Default Serving Size
             </h3>
@@ -403,7 +396,7 @@ export default function ProfileEditor({ isDark, onRegenerateClick }) {
               whileHover={{ scale: (isSaving || !canRegenerate(userProfile)) ? 1 : 1.02 }}
               whileTap={{ scale: (isSaving || !canRegenerate(userProfile)) ? 1 : 0.98 }}
             >
-              <FontAwesomeIcon icon={faRefresh} className="text-xl" />
+              <RefreshCw className="w-5 h-5" />
               {isSaving ? 'Saving Changes...' :
                !canRegenerate(userProfile) ? 'Regeneration Limit Reached' :
                'Regenerate All Plans'}

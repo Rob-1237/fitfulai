@@ -64,7 +64,7 @@ export const useWeekContext = (weekStartDay = 'sunday') => {
         if (!isNaN(date.getTime())) {
           return getWeekStart(date, weekStartDay);
         }
-      } catch (e) {
+      } catch {
         console.warn('Invalid week param:', weekParam);
       }
     }

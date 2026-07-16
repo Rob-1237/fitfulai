@@ -1,21 +1,13 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import {
-  faHome,
-  faPlateUtensils,
-  faBasketShopping,
-  faChartUser,
-  faBars,
-  faTimes
-} from '@fortawesome/pro-duotone-svg-icons';
+import { Home, UtensilsCrossed, ShoppingBasket, LayoutDashboard, Menu, X } from 'lucide-react';
 import { useUIStore } from '../../stores/useUIStore';
 
 const navigationItems = [
-  { path: '/', page: 'home', icon: faHome, label: 'Home' },
-  { path: '/dashboard', page: 'dashboard', icon: faChartUser, label: 'Dashboard' },
-  { path: '/meals', page: 'meals', icon: faPlateUtensils, label: 'Meals' },
-  { path: '/groceries', page: 'groceries', icon: faBasketShopping, label: 'Groceries' }
+  { path: '/', page: 'home', icon: Home, label: 'Home' },
+  { path: '/dashboard', page: 'dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+  { path: '/meals', page: 'meals', icon: UtensilsCrossed, label: 'Meals' },
+  { path: '/groceries', page: 'groceries', icon: ShoppingBasket, label: 'Groceries' }
 ];
 
 const SidebarDrawer = ({ isDark }) => {
@@ -43,10 +35,7 @@ const SidebarDrawer = ({ isDark }) => {
       whileHover={!isActive ? { x: 4 } : {}}
       whileTap={{ scale: 0.98 }}
     >
-      <FontAwesomeIcon 
-        icon={item.icon} 
-        className={`text-lg mr-3`} 
-      />
+      <item.icon className="w-5 h-5 mr-3" />
       <span className={`font-medium`}>
         {item.label}
       </span>
@@ -72,10 +61,10 @@ const SidebarDrawer = ({ isDark }) => {
         whileHover={{ opacity: .8 }}
         whileTap={{ scale: 0.95 }}
       >
-        <FontAwesomeIcon 
-          icon={drawerOpen ? faTimes : faBars} 
-          className={`${isDark ? 'text-[var(--color-lt-gray)]' : 'text-[var(--color-dk-gray)]'} text-2xl`} 
-        />
+        {(() => {
+          const ToggleIcon = drawerOpen ? X : Menu;
+          return <ToggleIcon className={`${isDark ? 'text-[var(--color-lt-gray)]' : 'text-[var(--color-dk-gray)]'} w-6 h-6`} />;
+        })()}
       </motion.button>
 
       {/* Overlay */}
@@ -111,7 +100,7 @@ const SidebarDrawer = ({ isDark }) => {
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
             >
-              <FontAwesomeIcon icon={faTimes} className={`${isDark ? 'text-[var(--color-white)] hover:text-[var(--color-dk-gray)]' : 'text-[var(--color-dk-gray)]'}`} />
+              <X className={`w-5 h-5 ${isDark ? 'text-[var(--color-white)] hover:text-[var(--color-dk-gray)]' : 'text-[var(--color-dk-gray)]'}`} />
             </motion.button>
           </div>
 

@@ -1,19 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import {
-  faDumbbell,
-  faPlateUtensils,
-  faShoppingCart,
-  faCheck,
-  faExclamationTriangle,
-  faRotateRight,
-  faSparkles
-} from '@fortawesome/pro-duotone-svg-icons';
+import { UtensilsCrossed, ShoppingCart, Check, AlertTriangle, RotateCw, Sparkles } from 'lucide-react';
 
 const GenerationProgressModal = ({ isOpen, onClose, onComplete, userProfile, isDark = false, forceRefresh = false }) => {
-  const [currentStep, setCurrentStep] = useState(null);
   const [stepStatuses, setStepStatuses] = useState({
     meals: 'pending',
     groceries: 'pending'
@@ -31,14 +21,14 @@ const GenerationProgressModal = ({ isOpen, onClose, onComplete, userProfile, isD
       id: 'meals',
       name: 'Meal Plan',
       description: 'Designing nutrition-focused meal schedules',
-      icon: faPlateUtensils,
+      icon: UtensilsCrossed,
       color: 'orange'
     },
     {
       id: 'groceries',
       name: 'Grocery List',
       description: 'Organizing efficient shopping lists',
-      icon: faShoppingCart,
+      icon: ShoppingCart,
       color: 'green'
     }
   ];
@@ -106,7 +96,6 @@ const GenerationProgressModal = ({ isOpen, onClose, onComplete, userProfile, isD
   const handleProgress = (progress) => {
     const { step, status, data } = progress;
 
-    setCurrentStep(step);
     setStepStatuses(prev => ({
       ...prev,
       [step]: status
@@ -121,9 +110,9 @@ const GenerationProgressModal = ({ isOpen, onClose, onComplete, userProfile, isD
   };
 
   const getStepIcon = (step, status) => {
-    if (status === 'completed') return faCheck;
-    if (status === 'failed') return faExclamationTriangle;
-    if (status === 'retrying') return faRotateRight;
+    if (status === 'completed') return Check;
+    if (status === 'failed') return AlertTriangle;
+    if (status === 'retrying') return RotateCw;
     return step.icon;
   };
 
@@ -170,13 +159,13 @@ const GenerationProgressModal = ({ isOpen, onClose, onComplete, userProfile, isD
               animate={{ rotate: isGenerating ? 360 : 0 }}
               transition={{ duration: 2, repeat: isGenerating ? Infinity : 0, ease: "linear" }}
             >
-              <FontAwesomeIcon icon={faSparkles} className="text-white text-2xl" />
+              <Sparkles className="text-white w-6 h-6" />
             </motion.div>
             <h2 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
               Creating Your Plans
             </h2>
             <p className={`${isDark ? 'text-gray-300' : 'text-gray-600'} mt-2`}>
-              Please wait while we generate your personalized fitness and nutrition plans
+              Please wait while we generate your personalized meal plan and grocery list
             </p>
           </div>
 
@@ -217,11 +206,15 @@ const GenerationProgressModal = ({ isOpen, onClose, onComplete, userProfile, isD
                     animate={status === 'in_progress' ? { scale: [1, 1.1, 1] } : {}}
                     transition={{ duration: 1, repeat: status === 'in_progress' ? Infinity : 0 }}
                   >
-                    <FontAwesomeIcon
-                      icon={getStepIcon(step, status)}
-                      className={`text-sm ${getStepColor(step, status)}`}
-                      spin={status === 'in_progress' || status === 'retrying'}
-                    />
+                    {(() => {
+                      const StepIcon = getStepIcon(step, status);
+                      const spinning = status === 'in_progress' || status === 'retrying';
+                      return (
+                        <StepIcon
+                          className={`w-4 h-4 ${getStepColor(step, status)} ${spinning ? 'animate-spin' : ''}`}
+                        />
+                      );
+                    })()}
                   </motion.div>
                   <div className="flex-1">
                     <h3 className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
@@ -252,7 +245,7 @@ const GenerationProgressModal = ({ isOpen, onClose, onComplete, userProfile, isD
                   {generationResults.success ? '🎉 All Done!' : '⚠️ Partial Success'}
                 </h4>
                 <p className="text-sm">
-                  Generated {generationResults.summary.successful}/3 plans
+                  Generated {generationResults.summary.successful}/2 plans
                   {generationResults.summary.totalCost > 0 &&
                     ` • Cost: $${generationResults.summary.totalCost.toFixed(4)}`
                   }

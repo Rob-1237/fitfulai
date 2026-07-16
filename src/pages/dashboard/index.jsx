@@ -1,14 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faChartUser,
-  faRobot,
-  faPlateUtensils,
-  faBasketShopping,
-  faBrain,
-  faClock,
-} from "@fortawesome/pro-duotone-svg-icons";
+import { UtensilsCrossed, ShoppingBasket, Brain, Clock } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
 import {
   getUserMealPlans,
@@ -17,8 +9,6 @@ import {
 import ProfileEditor from "../../components/dashboard/ProfileEditor";
 import GenerationProgressModal from "../../components/generation/GenerationProgressModal";
 import {
-  canRegenerate,
-  getRegenerationMessage,
   shouldResetLimits,
   resetRegenerationLimits,
 } from "../../lib/regenerationLimits";
@@ -102,19 +92,6 @@ function Dashboard({ isDark }) {
     fetchLastGenerationDate();
   }, [user, userState]);
 
-  const getMessage = () => {
-    switch (userState) {
-      case "unlogged":
-        return "Your central hub for AI-powered fitness and nutrition - Sign in to get started!";
-      case "logged":
-        return "Welcome! Complete your profile to unlock your personalized dashboard!";
-      case "onboarded":
-        return "Welcome to your personalized fitness and nutrition dashboard!";
-      default:
-        return "Loading dashboard...";
-    }
-  };
-
   const PreviewContent = () => (
     <div className="max-w-6xl mx-auto">
       {/* Hero Section */}
@@ -124,19 +101,16 @@ function Dashboard({ isDark }) {
             isDark ? "text-white" : "text-gray-900"
           }`}
         >
-          Your Complete Fitness Assistant
+          Your AI Meal Planning Assistant
         </h2>
         <p
           className={`text-xl ${
             isDark ? "text-gray-300" : "text-gray-600"
           } max-w-3xl mx-auto mb-8`}
         >
-          Fitful combines personalized fitness and nutrition science to create a
-          comprehensive wellness platform tailored uniquely to you.
+          Fitful uses nutrition science and AI to build meal plans and grocery
+          lists tailored uniquely to you.
         </p>
-        {/* <div className="flex justify-center">
-                    <FontAwesomeIcon icon={faRobot} className="text-6xl text-blue-500 mb-6" />
-                </div> */}
       </div>
 
       {/* Core Features Grid */}
@@ -148,10 +122,7 @@ function Dashboard({ isDark }) {
           whileHover={{ scale: 1.03, y: -5 }}
           transition={{ duration: 0.2 }}
         >
-          <FontAwesomeIcon
-            icon={faPlateUtensils}
-            className="text-orange-500 text-4xl mb-4"
-          />
+          <UtensilsCrossed className="text-orange-500 w-10 h-10 mb-4 mx-auto" />
           <h3
             className={`text-xl font-semibold mb-3 ${
               isDark ? "text-white" : "text-gray-900"
@@ -179,10 +150,7 @@ function Dashboard({ isDark }) {
           whileHover={{ scale: 1.03, y: -5 }}
           transition={{ duration: 0.2 }}
         >
-          <FontAwesomeIcon
-            icon={faBasketShopping}
-            className="text-green-500 text-4xl mb-4"
-          />
+          <ShoppingBasket className="text-green-500 w-10 h-10 mb-4 mx-auto" />
           <h3
             className={`text-xl font-semibold mb-3 ${
               isDark ? "text-white" : "text-gray-900"
@@ -211,10 +179,7 @@ function Dashboard({ isDark }) {
         } shadow-lg mb-16`}
       >
         <div className="flex items-center justify-center mb-6">
-          <FontAwesomeIcon
-            icon={faBrain}
-            className="text-purple-500 text-3xl mr-4"
-          />
+          <Brain className="text-purple-500 w-8 h-8 mr-4" />
           <h3
             className={`text-2xl font-semibold ${
               isDark ? "text-white" : "text-gray-900"
@@ -230,17 +195,17 @@ function Dashboard({ isDark }) {
                 isDark ? "text-white" : "text-gray-900"
               }`}
             >
-              Learns from Your Progress
+              Built Around Your Profile
             </h4>
             <ul
               className={`space-y-2 ${
                 isDark ? "text-gray-300" : "text-gray-600"
               }`}
             >
-              <li>• Tracks your workout performance and adjusts difficulty</li>
-              <li>• Monitors eating patterns and refines meal suggestions</li>
-              <li>• Adapts to your lifestyle changes and preferences</li>
-              <li>• Optimizes timing based on your schedule and habits</li>
+              <li>• Calorie targets calculated from your stats and goals</li>
+              <li>• Meal suggestions matched to your dietary preferences</li>
+              <li>• Allergies respected in every generated recipe</li>
+              <li>• Macro breakdowns tuned to your nutrition goal</li>
             </ul>
           </div>
           <div>
@@ -249,17 +214,17 @@ function Dashboard({ isDark }) {
                 isDark ? "text-white" : "text-gray-900"
               }`}
             >
-              Gets Smarter Over Time
+              Checks Its Own Work
             </h4>
             <ul
               className={`space-y-2 ${
                 isDark ? "text-gray-300" : "text-gray-600"
               }`}
             >
-              <li>• Predicts what meals you'll enjoy most</li>
-              <li>• Suggests workout variations to prevent plateaus</li>
-              <li>• Identifies the best times for you to exercise</li>
-              <li>• Recommends strategic rest days and recovery</li>
+              <li>• Generated plans are validated against your targets</li>
+              <li>• Plans that miss the mark are automatically revised</li>
+              <li>• Grocery lists are built directly from your meal plan</li>
+              <li>• Ingredient quantities consolidated across the week</li>
             </ul>
           </div>
         </div>
@@ -283,7 +248,7 @@ function Dashboard({ isDark }) {
             <li className="flex items-start space-x-3">
               <span className="text-blue-500 mt-1">•</span>
               <span>
-                Your workout calorie burn automatically adjusts your meal plan
+                Your profile drives calorie and macro targets automatically
               </span>
             </li>
             <li className="flex items-start space-x-3">
@@ -295,7 +260,7 @@ function Dashboard({ isDark }) {
             <li className="flex items-start space-x-3">
               <span className="text-green-500 mt-1">•</span>
               <span>
-                Progress tracking influences all future recommendations
+                Preference updates flow into every regenerated plan
               </span>
             </li>
             <li className="flex items-start space-x-3">
@@ -381,10 +346,7 @@ function Dashboard({ isDark }) {
               } flex items-center justify-between`}
             >
               <div className="flex items-center gap-3">
-                <FontAwesomeIcon
-                  icon={faClock}
-                  className="text-blue-500 text-xl"
-                />
+                <Clock className="text-blue-500 w-5 h-5" />
                 <div>
                   <p
                     className={`text-sm font-medium ${

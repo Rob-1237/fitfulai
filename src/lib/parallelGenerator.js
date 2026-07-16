@@ -86,7 +86,7 @@ export const generateCompleteUserPlan = async (userProfile, onProgress = () => {
 
     if (failedGenerations.length > 0) {
       // Retry logic for failed generations
-      const retryResults = await retryFailedGenerations(userProfile, results, onProgress);
+      const retryResults = await retryFailedGenerations(userProfile, results, onProgress, forceRefresh);
       Object.assign(results, retryResults);
     }
 
@@ -126,7 +126,7 @@ export const generateCompleteUserPlan = async (userProfile, onProgress = () => {
 };
 
 // Retry logic for failed generations
-const retryFailedGenerations = async (userProfile, currentResults, onProgress, maxRetries = 2) => {
+const retryFailedGenerations = async (userProfile, currentResults, onProgress, forceRefresh = false, maxRetries = 2) => {
   const retryResults = { ...currentResults };
 
   for (const error of currentResults.errors) {
@@ -141,10 +141,11 @@ const retryFailedGenerations = async (userProfile, currentResults, onProgress, m
           case 'meals':
             result = await generateMealPlan(userProfile, 'weekly', forceRefresh);
             break;
-          case 'groceries':
+          case 'groceries': {
             const mealPlan = retryResults.meals?.data;
             result = await generateGroceryList(userProfile, mealPlan, forceRefresh);
             break;
+          }
           default:
             continue;
         }
@@ -190,7 +191,7 @@ const retryFailedGenerations = async (userProfile, currentResults, onProgress, m
 };
 
 // Helper function to check if user has complete plans
-export const hasCompletePlans = (user) => {
+export const hasCompletePlans = (_user) => {
   // This would check Firestore for existing meal and grocery plans
   // Return true if user has both, false otherwise
   // Implementation depends on your data structure

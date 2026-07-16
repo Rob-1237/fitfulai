@@ -1,12 +1,14 @@
 import { motion } from 'framer-motion';
 
 export default function FitnessGoalsStep({ data, updateData }) {
-  const fitnessGoals = [
-    { value: 'weight_loss', label: 'Lose Weight', emoji: '📉', desc: 'Burn fat and get leaner' },
-    { value: 'muscle_gain', label: 'Build Muscle', emoji: '💪', desc: 'Increase strength and size' },
-    { value: 'general_fitness', label: 'General Fitness', emoji: '🏃', desc: 'Stay healthy and active' },
-    { value: 'endurance', label: 'Endurance', emoji: '🏃‍♂️', desc: 'Improve cardiovascular health' },
-    { value: 'strength', label: 'Get Stronger', emoji: '🏋️', desc: 'Increase power and strength' }
+  // Stored under the legacy `fitnessGoal` field name in Firestore profiles;
+  // values are kept stable so existing profiles and calorie calculations still work.
+  const nutritionGoals = [
+    { value: 'weight_loss', label: 'Lose Weight', emoji: '📉', desc: 'Eat at a calorie deficit to burn fat' },
+    { value: 'muscle_gain', label: 'Build Muscle', emoji: '💪', desc: 'Protein-forward meals with a calorie surplus' },
+    { value: 'general_fitness', label: 'Eat Healthier', emoji: '🥗', desc: 'Balanced nutrition at maintenance calories' },
+    { value: 'endurance', label: 'Fuel Endurance', emoji: '🏃‍♂️', desc: 'Carb-focused fueling for cardio training' },
+    { value: 'strength', label: 'Fuel Strength', emoji: '🏋️', desc: 'High-protein fueling for strength training' }
   ];
 
   const activityLevels = [
@@ -21,10 +23,10 @@ export default function FitnessGoalsStep({ data, updateData }) {
     <div className="space-y-6">
       <div>
         <h3 className="text-lg font-medium text-gray-900 mb-2">
-          What's your fitness goal?
+          What's your nutrition goal?
         </h3>
         <p className="text-gray-600">
-          Help us tailor your workout and nutrition plans
+          We use this to set your calorie and macro targets
         </p>
       </div>
 
@@ -35,7 +37,7 @@ export default function FitnessGoalsStep({ data, updateData }) {
             Primary Goal
           </label>
           <div className="grid grid-cols-1 gap-3">
-            {fitnessGoals.map((goal) => (
+            {nutritionGoals.map((goal) => (
               <motion.button
                 key={goal.value}
                 type="button"

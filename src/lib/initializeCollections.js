@@ -146,8 +146,7 @@ const createUserProfile = async (userId, userData, onboardingData) => {
     preferences: onboardingData.preferences || {
       mealComplexity: 'intermediate',
       cuisinePreferences: [], // e.g., ['italian', 'mexican', 'asian']
-      budgetRange: 'medium',
-      workoutDays: ['monday', 'wednesday', 'friday']
+      budgetRange: 'medium'
     },
 
     // Timezone
@@ -387,7 +386,7 @@ const initializeAiCache = async (userId) => {
       fitnessGoal: 'general_fitness',
       activityLevel: 'light'
     },
-    requestType: 'workout', // 'workout', 'meal', 'grocery'
+    requestType: 'meal', // 'meal', 'grocery'
     tokensUsed: 1250,
     cost: 0.025,
     expiresAt: Timestamp.fromMillis(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days from now
@@ -424,7 +423,7 @@ export const userCollectionsExist = async (userId) => {
  * Clean up placeholder documents (call after real data is generated)
  * @param {string} userId
  */
-export const cleanupPlaceholders = async (userId) => {
+export const cleanupPlaceholders = async (_userId) => {
   console.log('🧹 Cleaning up placeholder documents...');
   // This will be implemented later when we have real data generation
   // Will query and remove documents with type: 'placeholder'

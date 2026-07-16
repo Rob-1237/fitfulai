@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-export const useUIStore = create((set, get) => ({
+export const useUIStore = create((set) => ({
   // Current page state
   currentPage: 'home',
   setCurrentPage: (page) => set({ currentPage: page }),
@@ -47,5 +47,5 @@ export const useUIStore = create((set, get) => ({
     })),
 
   // Page definitions
-  pages: ['home', 'workouts', 'meals', 'groceries', 'dashboard'],
+  pages: ['home', 'meals', 'groceries', 'dashboard'],
 }));

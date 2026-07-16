@@ -63,92 +63,6 @@ export default function ReviewStep({ data, updateData, isLoading, setIsLoading, 
 
   const metrics = calculateMetrics();
 
-  const handleCompleteOnboarding = async () => {
-    setIsLoading(true);
-
-    try {
-      // Calculate final metrics
-      const finalMetrics = metrics || {};
-
-      // Prepare complete onboarding data for collection initialization
-      const completeOnboardingData = {
-        // Basic info
-        age: data.age,
-        gender: data.gender,
-        unitsPreference: data.unitsPreference,
-
-        // Physical characteristics
-        weightLbs: data.weightLbs,
-        weightKgs: data.weightKg,
-        heightInches: data.unitsPreference === 'imperial'
-          ? (data.heightFeet * 12 + data.heightInches)
-          : Math.round(data.heightCm / 2.54),
-        heightCentimeters: data.heightCm || Math.round((data.heightFeet * 12 + data.heightInches) * 2.54),
-
-        // Fitness & nutrition preferences
-        fitnessGoal: data.fitnessGoal,
-        activityLevel: data.activityLevel,
-        dietaryPreferences: data.dietaryPreferences || [],
-        allergies: data.allergies || [],
-
-        // Calculated metrics
-        bmr: finalMetrics.bmr,
-        tdee: finalMetrics.tdee,
-        calorieTarget: finalMetrics.calorieTarget,
-        macros: finalMetrics.macros,
-
-        // Additional preferences
-        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone, // Auto-detect timezone
-        preferences: {
-          workoutDays: ['monday', 'wednesday', 'friday'], // Default workout days
-          mealComplexity: 'intermediate',
-          budgetRange: 'medium'
-        },
-
-        // Mark onboarding as complete!
-        onboardingCompleted: true
-      };
-
-      // Get user data for collection initialization
-      const userData = {
-        email: user.email,
-        displayName: user.displayName
-      };
-
-      // Initialize all user collections using our new system
-      const result = await initializeUserCollections(user.uid, userData, completeOnboardingData);
-
-      if (result.success) {
-        // Update local data with calculated metrics
-        updateData({
-          bmr: finalMetrics.bmr,
-          tdee: finalMetrics.tdee,
-          calorieTarget: finalMetrics.calorieTarget,
-          macros: finalMetrics.macros,
-          onboardingCompleted: true
-        });
-
-        // Clear draft data
-        localStorage.removeItem('onboarding_draft');
-
-        // DON'T close the wizard - let user stay on ReviewStep to click generate button
-      } else {
-        throw new Error(result.error);
-      }
-
-    } catch (error) {
-      console.error('❌ Error completing onboarding:', error);
-      console.error('❌ Full error details:', {
-        message: error.message,
-        stack: error.stack,
-        name: error.name
-      });
-      alert(`Sorry, there was an error completing your profile: ${error.message}. Please try again.`);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const handleGeneratePlans = async () => {
     setIsLoading(true);
 
@@ -186,7 +100,6 @@ export default function ReviewStep({ data, updateData, isLoading, setIsLoading, 
         // Additional preferences
         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         preferences: {
-          workoutDays: ['monday', 'wednesday', 'friday'],
           mealComplexity: 'intermediate',
           budgetRange: 'medium'
         },

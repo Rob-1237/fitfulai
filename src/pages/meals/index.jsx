@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPlateUtensils, faUtensils, faClock, faFireFlame } from "@fortawesome/pro-duotone-svg-icons";
+import { UtensilsCrossed, Utensils, Clock, Flame } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
 import MealsContent from "../../components/content/MealsContent";
 
@@ -21,19 +20,6 @@ function Meals({ isDark }) {
         return () => clearTimeout(timer);
     }, []);
 
-    const getMessage = () => {
-        switch (userState) {
-            case "unlogged":
-                return "Discover AI-powered meal planning - Sign in to get started!";
-            case "logged":
-                return "Complete your profile to unlock personalized meal plans!";
-            case "onboarded":
-                return "Your personalized meal plans are ready!";
-            default:
-                return "Loading meals...";
-        }
-    };
-
     const SplashScreen = () => (
         <motion.div
             className="flex flex-col items-center justify-center py-24"
@@ -48,7 +34,7 @@ function Meals({ isDark }) {
                 <div className={`text-4xl ${isDark ? 'text-[var(--color-orange)]' : 'text-[var(--color-dk-gray)]'} font-bold`}>
                     FitfulAI
                 </div>
-                <FontAwesomeIcon icon={faPlateUtensils} className="text-orange-500 text-4xl" />
+                <UtensilsCrossed className="text-orange-500 w-10 h-10" />
             </div>
 
             {/* Page Title */}
@@ -95,7 +81,7 @@ function Meals({ isDark }) {
                     transition={{ duration: 0.2 }}
                 >
                     <div className="flex items-center space-x-3 mb-4">
-                        <FontAwesomeIcon icon={faPlateUtensils} className="text-orange-500 text-2xl" />
+                        <UtensilsCrossed className="text-orange-500 w-6 h-6" />
                         <h3 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
                             Today's Meals
                         </h3>
@@ -126,7 +112,7 @@ function Meals({ isDark }) {
                     transition={{ duration: 0.2 }}
                 >
                     <div className="flex items-center space-x-3 mb-4">
-                        <FontAwesomeIcon icon={faUtensils} className="text-green-500 text-2xl" />
+                        <Utensils className="text-green-500 w-6 h-6" />
                         <h3 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
                             Next Meal
                         </h3>
@@ -137,11 +123,11 @@ function Meals({ isDark }) {
                         </div>
                         <div className="flex items-center space-x-4">
                             <div className="flex items-center space-x-1">
-                                <FontAwesomeIcon icon={faClock} className="text-blue-500" />
+                                <Clock className="text-blue-500 w-4 h-4" />
                                 <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>25 min</span>
                             </div>
                             <div className="flex items-center space-x-1">
-                                <FontAwesomeIcon icon={faFireFlame} className="text-red-500" />
+                                <Flame className="text-red-500 w-4 h-4" />
                                 <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>520 cal</span>
                             </div>
                         </div>
@@ -161,7 +147,7 @@ function Meals({ isDark }) {
                     transition={{ duration: 0.2 }}
                 >
                     <div className="flex items-center space-x-3 mb-4">
-                        <FontAwesomeIcon icon={faFireFlame} className="text-purple-500 text-2xl" />
+                        <Flame className="text-purple-500 w-6 h-6" />
                         <h3 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
                             Daily Targets
                         </h3>

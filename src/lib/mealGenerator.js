@@ -1,4 +1,4 @@
-import { generateAIResponse, estimatePromptCost } from './openai';
+import { generateAIResponse } from './openai';
 import { getCachedResponse } from './firestoreQueries';
 import {
   collection,
@@ -333,7 +333,7 @@ const removeMealPlanPlaceholder = async (userId) => {
       isActive: false,
       replacedAt: serverTimestamp()
     });
-  } catch (error) {
+  } catch {
     // Silently handle - placeholder may not exist
   }
 };

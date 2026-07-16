@@ -1,11 +1,6 @@
 import { motion } from "framer-motion";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { useAuth } from "../../hooks/useAuth";
-// import { faPersonRunning } from "@fortawesome/pro-duotone-svg-icons";
 
 const Home = ({ isDark }) => {
-  const { user } = useAuth();
-
   return (
     <motion.div
       className={`flex flex-col items-center justify-center min-h-screen p-8 ${isDark ? 'bg-[var(--color-black)]' : 'bg-[var(--color-white)]'}`}
@@ -28,7 +23,7 @@ const Home = ({ isDark }) => {
         animate={{ opacity: 1 }}
         transition={{ delay: 0.4 }}
       >
-        Your fitness and nutrition companion
+        Your AI meal planning & grocery companion
       </motion.p>
 
       <motion.div

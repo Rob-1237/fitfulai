@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef, memo } from 'react';
 import { motion } from 'framer-motion';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faUser, faSignIn, faSignOut, faCog } from '@fortawesome/pro-duotone-svg-icons';
+import { User, LogOut, Settings } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { useUIStore } from '../../stores/useUIStore';
 import SettingsModal from '../modals/SettingsModal';
@@ -9,7 +8,7 @@ import EditAccountModal from '../modals/EditAccountModal';
 import OnboardingWizard from '../onboarding/OnboardingWizard';
 
 const TopNavigation = memo(({ isDark, isMobile, onboarded }) => {
-  const { user, userProfile, signOut, refreshUserProfile } = useAuth();
+  const { user, userProfile, signOut } = useAuth();
   const { openModal, closeModal, modals } = useUIStore();
   const [showOnboardingModal, setShowOnboardingModal] = useState(false);
 
@@ -44,7 +43,6 @@ const TopNavigation = memo(({ isDark, isMobile, onboarded }) => {
             // whileHover={{ scale: 1.02 }}
             // whileTap={{ scale: 0.98 }}
           >
-            {/* <FontAwesomeIcon icon={faSignIn} /> */}
             <span>Sign In</span>
           </motion.button>
         );
@@ -203,7 +201,7 @@ const UserProfileCircle = ({ isDark, onSignOut }) => {
             onClick={handleEditAccountClick}
             className={`w-full px-3 py-2 text-left text-sm ${isDark ? 'text-gray-300 hover:bg-[var(--color-dk-gray)]' : 'text-gray-700 hover:bg-gray-100'} transition-colors flex items-center space-x-2`}
           >
-            <FontAwesomeIcon icon={faUser} className="w-4 h-4" />
+            <User className="w-4 h-4" />
             <span>Edit Account</span>
           </button>
 
@@ -211,7 +209,7 @@ const UserProfileCircle = ({ isDark, onSignOut }) => {
             onClick={handleSettingsClick}
             className={`w-full px-3 py-2 text-left text-sm ${isDark ? 'text-gray-300 hover:bg-[var(--color-dk-gray)]' : 'text-gray-700 hover:bg-gray-100'} transition-colors flex items-center space-x-2`}
           >
-            <FontAwesomeIcon icon={faCog} className="w-4 h-4" />
+            <Settings className="w-4 h-4" />
             <span>Settings</span>
           </button>
 
@@ -219,7 +217,7 @@ const UserProfileCircle = ({ isDark, onSignOut }) => {
             onClick={handleSignOutClick}
             className={`w-full px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50 transition-colors flex items-center space-x-2`}
           >
-            <FontAwesomeIcon icon={faSignOut} className="w-4 h-4" />
+            <LogOut className="w-4 h-4" />
             <span>Sign Out</span>
           </button>
         </div>

@@ -1,12 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faBasketShopping,
-  faListCheck,
-  faDollarSign,
-  faMapMarkerAlt,
-} from "@fortawesome/pro-duotone-svg-icons";
+import { ShoppingBasket, ListChecks, DollarSign } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
 import GroceriesContent from "../../components/content/GroceriesContent";
 
@@ -31,19 +25,6 @@ function Groceries({ isDark }) {
     return () => clearTimeout(timer);
   }, []);
 
-  const getMessage = () => {
-    switch (userState) {
-      case "unlogged":
-        return "Smart grocery lists from your meal plans - Sign in to get started!";
-      case "logged":
-        return "Complete your profile to unlock smart grocery lists!";
-      case "onboarded":
-        return "Your smart grocery lists are ready!";
-      default:
-        return "Loading groceries...";
-    }
-  };
-
   const SplashScreen = () => (
     <motion.div
       className="flex flex-col items-center justify-center py-24"
@@ -62,10 +43,7 @@ function Groceries({ isDark }) {
         >
           FitfulAI
         </div>
-        <FontAwesomeIcon
-          icon={faBasketShopping}
-          className="text-green-500 text-4xl"
-        />
+        <ShoppingBasket className="text-green-500 w-10 h-10" />
       </div>
 
       {/* Page Title */}
@@ -131,10 +109,7 @@ function Groceries({ isDark }) {
           transition={{ duration: 0.2 }}
         >
           <div className="flex items-center space-x-3 mb-4">
-            <FontAwesomeIcon
-              icon={faBasketShopping}
-              className="text-green-500 text-2xl"
-            />
+            <ShoppingBasket className="text-green-500 w-6 h-6" />
             <h3
               className={`text-lg font-semibold ${
                 isDark ? "text-white" : "text-gray-900"
@@ -200,10 +175,7 @@ function Groceries({ isDark }) {
           transition={{ duration: 0.2 }}
         >
           <div className="flex items-center space-x-3 mb-4">
-            <FontAwesomeIcon
-              icon={faListCheck}
-              className="text-blue-500 text-2xl"
-            />
+            <ListChecks className="text-blue-500 w-6 h-6" />
             <h3
               className={`text-lg font-semibold ${
                 isDark ? "text-white" : "text-gray-900"
@@ -268,10 +240,7 @@ function Groceries({ isDark }) {
           transition={{ duration: 0.2 }}
         >
           <div className="flex items-center space-x-3 mb-4">
-            <FontAwesomeIcon
-              icon={faDollarSign}
-              className="text-purple-500 text-2xl"
-            />
+            <DollarSign className="text-purple-500 w-6 h-6" />
             <h3
               className={`text-lg font-semibold ${
                 isDark ? "text-white" : "text-gray-900"

@@ -293,7 +293,7 @@ export default function OnboardingWizard({ open, onClose }) {
       <GenerationProgressModal
         isOpen={showGenerationModal}
         onClose={() => setShowGenerationModal(false)}
-        onComplete={async (results) => {
+        onComplete={async () => {
           setShowGenerationModal(false);
 
           // Clear draft data since onboarding is complete

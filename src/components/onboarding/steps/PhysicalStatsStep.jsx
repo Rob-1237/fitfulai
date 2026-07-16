@@ -33,7 +33,7 @@ export default function PhysicalStatsStep({ data, updateData }) {
         }
         return null;
 
-      case 'heightInches':
+      case 'heightInches': {
         // Allow 0 as valid (e.g., 6'0")
         if (value === null || value === undefined || value === '') return 'Inches is required';
         const numericInches = typeof value === 'string' ? parseInt(value) : value;
@@ -46,6 +46,7 @@ export default function PhysicalStatsStep({ data, updateData }) {
           return 'Total height must be between 3\'0" and 8\'0"';
         }
         return null;
+      }
 
       case 'heightCm':
         if (!value) return 'Height is required';
